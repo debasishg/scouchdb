@@ -1,0 +1,38 @@
+h1. scouchdb : Persisting Scala Objects in CouchDB
+
+scouchdb offers a Scala interface to using CouchDB. Scala offers objects and classes as the natural way to abstract entities, while CouchDB stores artifacts as JSON documents. scouchdb makes it easy to use the object interface of Scala for persistence and management of Scala objects as JSON documents.
+
+
+h2. Motivation
+
+The primary motivation for making scouchdb is to offer a form of CouchDB driver to manipulate objects in a completely non-intrusive manner. The Scala objects are not CouchDB aware and remain completely transparent of any CouchDB dependency. Incorporating CouchDB specific attributes like id and rev take away a lot of reusability goodness from domain objects and make them constrained only for the specific platform.
+
+h2. Dependencies
+
+ * "ScalaTest 0.9.5":http://www.artima.com/scalatest
+ * "Scala 2.7.5":http://www.scala-lang.org/downloads
+ * "Apache HTTP Client 4.0-beta1":http://hc.apache.org/httpclient-3.x
+ * "Apache HTTP Core 4.0":http://hc.apache.org/httpcomponents-core
+ * "dispatch-http-0.5.2":http://databinder.net/dispatch/Download
+ * "dispatch-json-0.5.2":http://databinder.net/dispatch/Download
+ * "sjson-0.1":http://github.com/debasishg/sjson/tree/master
+ * CouchDB 0.9
+
+h1. License
+
+<pre>
+This software is licensed under the Apache 2 license, quoted below.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+</pre>
+
