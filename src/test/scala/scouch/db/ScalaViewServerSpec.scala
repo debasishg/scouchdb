@@ -40,7 +40,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
     val d = DesignDocument("power", null, Map[String, View]())
     d.language = "scala"
     val mapfn1 = """(doc: dispatch.json.JsValue) => {
-          val it = couch.json.JsBean.toBean(doc, classOf[couch.json.TestBeans.Item_1])._3; 
+          val it = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.TestBeans.Item_1])); 
           for (st <- it.prices)
             yield(List(it.item, st._2))
         }"""
@@ -103,7 +103,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
     val d = DesignDocument("big", null, Map[String, View]())
     d.language = "scala"
     val mapfn1 = """(doc: dispatch.json.JsValue) => {
-          val it = couch.json.JsBean.toBean(doc, classOf[couch.json.TestBeans.Item_1])._3; 
+          val it = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.TestBeans.Item_1])); 
           for (st <- it.prices)
             yield(List(it.item, st._2))
         }"""

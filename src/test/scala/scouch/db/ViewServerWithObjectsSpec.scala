@@ -57,14 +57,14 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       // map function
       val redCarsPrice =
         """(doc: dispatch.json.JsValue) => {
-          val (id, rev, car) = couch.json.JsBean.toBean(doc, classOf[couch.db.CarSaleItem]);
+          val car = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.CarSaleItem]));
           if (car.color.contains("Red")) List(List(car.make, car.price)) else Nil
         }"""
 
       // map function
       val redCars =
         """(doc: dispatch.json.JsValue) => {
-          val (id, rev, car) = couch.json.JsBean.toBean(doc, classOf[couch.db.CarSaleItem]);
+          val car = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.CarSaleItem]));
           if (car.color.contains("Red")) List(List(car.make, car)) else Nil
         }"""
 
@@ -132,7 +132,7 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       // map function
       val redCarsPrice =
         """(doc: dispatch.json.JsValue) => {
-          val (id, rev, car) = couch.json.JsBean.toBean(doc, classOf[couch.db.CarSaleItem]);
+          val car = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.CarSaleItem]));
           if (car.color.contains("Red")) List(List(car.make, car.price)) else Nil
         }"""
 
@@ -162,12 +162,12 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       // map function
       val mapForRedCars =
         """(doc: dispatch.json.JsValue) => {
-          val (id, rev, car) = couch.json.JsBean.toBean(doc, classOf[couch.db.CarSaleItem]);
+          val car = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.CarSaleItem]));
           if (car.color.contains("Red")) List(List(car.make, car)) else Nil
         }"""
 
       val reduceToPriceSum = """(key: List[(String, String)], values: List[dispatch.json.JsObject], rereduce: Boolean) => {
-          val objs = values.map(couch.json.JsBean.toBean(_, classOf[couch.db.CarSaleItem])._3).map(_.price)
+          val objs = values.map(sjson.json.JsBean.fromJSON(_, Some(classOf[scouch.db.CarSaleItem]))).map(_.price)
           objs.foldLeft(BigDecimal(0.00))(_+_)
         }"""
       
@@ -201,13 +201,13 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       // map function to spit out red cars
       val mapForRedCars =
         """(doc: dispatch.json.JsValue) => {
-          val (id, rev, car) = couch.json.JsBean.toBean(doc, classOf[couch.db.CarSaleItem]);
+          val car = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.CarSaleItem]));
           if (car.color.contains("Red")) List(List(car.make, car)) else Nil
         }"""
 
       // reduce function to get max price
       val reduceToMaxPrice = """(key: List[(String, String)], values: List[dispatch.json.JsObject], rereduce: Boolean) => {
-          values.map(couch.json.JsBean.toBean(_, classOf[couch.db.CarSaleItem])._3).map(_.price).sort((e1,e2) => (e1 > e2)).head
+          values.map(sjson.json.JsBean.fromJSON(_, Some(classOf[scouch.db.CarSaleItem]))).map(_.price).sort((e1,e2) => (e1 > e2)).head
         }"""
       
       val redCarsPriceView = new View(mapForRedCars, reduceToMaxPrice)
