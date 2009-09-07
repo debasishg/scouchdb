@@ -7,6 +7,12 @@ h2. Motivation
 
 The primary motivation for making scouchdb is to offer a form of CouchDB driver to manipulate objects in a completely non-intrusive manner. The Scala objects are not CouchDB aware and remain completely transparent of any CouchDB dependency. Incorporating CouchDB specific attributes like id and rev take away a lot of reusability goodness from domain objects and make them constrained only for the specific platform.
 
+h2. Running the Test Cases
+
+ * Ensure that the Scala View Server is set up as per the document "Scala View Server":http://wiki.github.com/debasishg/scouchdb/scala-view-server
+ * mvn jar:test-jar ## will generate scouchdb-0.5-tests.jar : required for running the test cases
+ * mvn exec:java ## will execute all test cases
+
 h2. Dependencies
 
  * "ScalaTest 0.9.5":http://www.artima.com/scalatest
