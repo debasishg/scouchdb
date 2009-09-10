@@ -37,7 +37,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
   }
   
   describe("Create a design document, for scala view") {
-    val d = DesignDocument("power", null, Map[String, View]())
+    val d = DesignDocument("power", null, Map[String, View](), null)
     d.language = "scala"
     val mapfn1 = """(doc: dispatch.json.JsValue) => {
           val it = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.TestBeans.Item_1])); 
@@ -78,7 +78,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
       revision = sh._2
     }
     it("update the document with 2 views") {
-      val doc = DesignDocument(d._id, revision, Map("power_lunch" -> vi_1, "mega_lunch" -> vi_2))
+      val doc = DesignDocument(d._id, revision, Map("power_lunch" -> vi_1, "mega_lunch" -> vi_2), null)
       doc.language = "scala"
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
@@ -100,7 +100,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
   }
   
   describe("Create a design document, for scala view with map and reduce") {
-    val d = DesignDocument("big", null, Map[String, View]())
+    val d = DesignDocument("big", null, Map[String, View](), null)
     d.language = "scala"
     val mapfn1 = """(doc: dispatch.json.JsValue) => {
           val it = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.TestBeans.Item_1])); 
@@ -135,7 +135,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
       revision = sh._2
     }
     it("update the document with the view") {
-      val doc = DesignDocument(d._id, revision, Map("big_lunch" -> vi_1))
+      val doc = DesignDocument(d._id, revision, Map("big_lunch" -> vi_1), null)
       doc.language = "scala"
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
@@ -156,6 +156,57 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
              .build))
       println(ls1)
       ls1.size should equal(3)
+    }
+  }
+
+  describe("Create a design document with pass thru validation function") {
+    
+    it("creation should be successful") {
+      val vfn = """(ndoc: dispatch.json.JsValue,
+        odoc: dispatch.json.JsValue, req: Any) => {}"""
+
+      val d = DesignDocument("foo_valid", null, Map[String, View](), vfn)
+      d.language = "scala"
+
+      val de = Doc(test, d._id)
+
+      d._id should equal("_design/foo_valid")
+      http(de add d)
+      val ir = http(de ># %(Id._id, Id._rev))
+      ir._1 should equal(d._id)
+    }
+    it("creation of a document should be successful") {
+      http(test doc Js("""{"item":"oranges","prices":{"Fresh Mart":1.99,"Price Max":3.19,"Citrus Circus":1.09}}"""))
+    }
+  }
+
+  describe("Create a design document with all fail validation function") {
+    
+    it("creation should be successful") {
+      val vfn = """(ndoc: dispatch.json.JsValue,
+        odoc: dispatch.json.JsValue, req: Any) => { throw new Exception("Cannot update"); }"""
+
+      val d = DesignDocument("foo_invalid", null, Map[String, View](), vfn)
+      d.language = "scala"
+
+      val de = Doc(test, d._id)
+
+      d._id should equal("_design/foo_invalid")
+      http(de add d)
+      val ir = http(de ># %(Id._id, Id._rev))
+      ir._1 should equal(d._id)
+    }
+    it("creation of a document should fail") {
+      intercept[dispatch.StatusCode] {
+        http(test doc Js("""{"item":"peaches","prices":{"Fresh Mart":1.99,"Price Max":3.19,"Citrus Circus":1.09}}"""))
+      }
+      try {
+        http(test doc Js("""{"item":"peaches","prices":{"Fresh Mart":1.99,"Price Max":3.19,"Citrus Circus":1.09}}"""))
+      }
+      catch {
+        case e: dispatch.StatusCode =>
+          e.code should equal(403)
+      }
     }
   }
 }

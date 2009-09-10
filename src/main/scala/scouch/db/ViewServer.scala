@@ -118,6 +118,26 @@ class ViewServer(val ps: PrintWriter) {
 
     JsValue.toJson(JsValue(List(true, rets)))
   }
+
+  def validate(funStr: String, newDoc: JsValue, 
+    oldDoc: JsValue, req: Any): Either[String, JsValue] = {
+    ps.println("in validate:" + funStr)
+    ps.println("newdoc = " + newDoc)
+    ps.println("olddoc = " + oldDoc)
+    ps.println("req = " + req)
+    ps.flush
+
+    try {
+      val fn = eval(funStr).asInstanceOf[Function3[JsValue, JsValue, Any, Any]]
+      fn(newDoc, oldDoc, req)
+      Left(JsValue.toJson(JsNumber(1)))
+    } catch {
+      case se: ScriptException =>
+        Right(JsValue(Map("error" -> "validation_compilation_error", "reason" -> se.getMessage)))
+      case ex: Exception =>
+        Right(JsValue(Map("error" -> "forbidden", "reason" -> ex.getMessage)))
+    }
+  }
 }
 
 /** comamnd line interface of the view server that interacts with couchdb. This has to be
@@ -206,6 +226,42 @@ object VS {
           p.write(v.reduce(reduceFns, kids, vs))
           p.write("\n")
           p.flush
+        }
+
+        // handle validate
+
+        /**
+         * The protocol is 
+         * CouchDB sends: 
+         * 
+         * ["validate", function string, new document, old document, request]
+         *
+         * View Server returns: 
+         *
+         * 1 if successful, otherwise exception having "error" -> "forbidden", "reason" -> anything
+         *
+         * The key "forbidden" is important - otherwise CouchDB will not send back 403.
+         *
+         * References:
+         *  $COUCH_SOURCE/share/server/validate.js
+         *  $COUCH_SOURCE/share/server/loop.js
+         *  $COUCH_SOURCE/share/server/util.js
+         *  $COUCH_HOME/test/query_server_spec.rb
+         */
+        case JsArray(List(JsString("validate"), JsString(fns), ndoc, odoc, req)) => {
+
+          v.validate(fns, ndoc, odoc, req) match {
+            case Left(s) => {
+              p.write(s)
+              p.write("\n")
+              p.flush
+            }
+            case Right(x) => {
+              p.write(JsValue.toJson(x))
+              p.write("\n")
+              p.flush
+            }
+          }
         }
 
         case _ =>

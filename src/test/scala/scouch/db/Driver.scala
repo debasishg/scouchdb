@@ -5,5 +5,6 @@ object Driver {
     (new SCouchDbSpec).execute()
     (new ScalaViewServerSpec).execute()
     (new ViewServerWithObjectsSpec).execute()
+    (new ScalaValidationSpec).execute()
   }
 }

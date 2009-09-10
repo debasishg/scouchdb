@@ -20,17 +20,24 @@ case class DesignDocument(var _id: String,
                           
                           @OptionTypeHint(classOf[Map[_,_]])
                           @JSONTypeHint(classOf[View])
-                          views: Map[String, View]) {
+                          views: Map[String, View],
+                          
+                          @JSONProperty("") { val ignoreIfNull = true, val ignore = false }
+                          validate_doc_update: String) {
   if (_id != null) 
     if (!_id.startsWith(DesignDocument.PREFIX))
       _id = DesignDocument.extendId(_id)
   
   var language = "javascript"
   
-  private [db] def this() = this(null, null, Map[String, View]())
+  private [db] def this() = this(null, null, Map[String, View](), null)
   
   override def toString = {
     "_id = " + _id + " _rev = " + _rev + " language = " + language + " " + 
+      (validate_doc_update match {
+        case null => ""
+        case x => " validate = " + x + " "
+      }) + 
       (views match {
         case null => ""
         case v => {

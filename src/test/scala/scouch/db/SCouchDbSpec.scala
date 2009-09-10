@@ -43,7 +43,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
   }
   
   describe("Create a design document, query by id and update") {
-    val d = DesignDocument("foo", null, Map[String, View]())
+    val d = DesignDocument("foo", null, Map[String, View](), null)
     val mapfn = "function(doc) { emit(doc.value,doc); }"
     val vi = new View(mapfn, null)
     var revision: String = null
@@ -72,7 +72,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       revision = sh._2
     }
     it("update the document with a view") {
-      val doc = DesignDocument(d._id, revision, Map("map" -> vi))
+      val doc = DesignDocument(d._id, revision, Map("map" -> vi), null)
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
       nir._1 should equal(d._id)
@@ -93,7 +93,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       sh._3._rev should equal(sh._2)
     }
     it("update with incorrect revision should give 409 (conflict in update)") {
-      val doc = DesignDocument(d._id, revision, Map("map" -> vi)) // using same revision as before
+      val doc = DesignDocument(d._id, revision, Map("map" -> vi), null) // using same revision as before
       intercept[dispatch.StatusCode] {
         http(de update(doc, revision))
       }
@@ -106,7 +106,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       }
     }
     it("update with null revision and same matching id should give 409 (conflict in update)") {
-      val doc = DesignDocument(d._id, null, Map("map" -> vi)) // using null revision 
+      val doc = DesignDocument(d._id, null, Map("map" -> vi), null) // using null revision 
       try {
         http(de update(doc, revision))
       }
@@ -284,7 +284,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
   }
   
   describe("Create another design document, query by id and update") {
-    val d = DesignDocument("lunch", null, Map[String, View]())
+    val d = DesignDocument("lunch", null, Map[String, View](), null)
     val mapfn = "function(doc) {\n    var store, price, key;\n    if (doc.item && doc.prices) {\n        for (store in doc.prices) {\n            price = doc.prices[store];\n            key = [doc.item, price];\n            emit(key, store);\n    }\n  }\n}\n"
     val vi = new View(mapfn, null)
     var revision: String = null
@@ -313,7 +313,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       revision = sh._2
     }
     it("update the document with a view") {
-      val doc = DesignDocument(d._id, revision, Map("least_cost_lunch" -> vi))
+      val doc = DesignDocument(d._id, revision, Map("least_cost_lunch" -> vi), null)
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
       nir._1 should equal(d._id)
@@ -366,7 +366,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       ir._1 should equal("_design/lunch")
       val d = ir._3
       val de = Doc(test, ir._1)
-      val doc = DesignDocument(ir._1, ir._2, ir._3.views + ("big_lunch" -> vi))
+      val doc = DesignDocument(ir._1, ir._2, ir._3.views + ("big_lunch" -> vi), null)
       
       http(de update(doc, ir._2))
       
@@ -591,6 +591,54 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       val d4 = bulkBuilder(None).id("add1").rev(ir1._2).deleted(true).build
       http(test bulkDocs(List(d1, d2, d3, d4), false)).size should equal(4)
       http(test all_docs).filter(_.startsWith("_design") == false).size should equal(sz + 3)
+    }
+  }
+
+  describe("Create a design document with pass thru validation function") {
+    val all_pass = "function(newDoc, oldDoc, userCtx) {}"  // all valid
+    val d = DesignDocument("foo_valid", null, Map[String, View](), all_pass)
+    val de = Doc(test, d._id)
+    
+    it("creation should be successful") {
+      d._id should equal("_design/foo_valid")
+      http(de add d)
+      val ir = http(de ># %(Id._id, Id._rev))
+      ir._1 should equal(d._id)
+    }
+    it("creation of a document should be successful") {
+      val s = Shop("Crossword", "The C Programming Language", 200)
+      val d = Doc(test, "crswd")
+      http(d add s)
+      val ir = http(d ># %(Id._id, Id._rev))
+      ir._1 should equal("crswd")
+    }
+  }
+  
+  describe("Create a design document with all-fail validation function") {
+    val all_fail = "function(newDoc, oldDoc, userCtx) {throw({forbidden : 'no way'});}"
+    val d = DesignDocument("foo_invalid", null, Map[String, View](), all_fail)
+    val de = Doc(test, d._id)
+    
+    it("creation should be successful") {
+      d._id should equal("_design/foo_invalid")
+      http(de add d)
+      val ir = http(de ># %(Id._id, Id._rev))
+      ir._1 should equal(d._id)
+    }
+    it("creation of a document should not be successful") {
+      val s = Shop("Crossword", "The C Programming Language", 200)
+      val d = Doc(test, "crswd1")
+      
+      intercept[dispatch.StatusCode] {
+        http(d add s)
+      }
+      try {
+        http(d add s)
+      }
+      catch {
+        case e: dispatch.StatusCode =>
+          e.code should equal(403)
+      }
     }
   }
 }
