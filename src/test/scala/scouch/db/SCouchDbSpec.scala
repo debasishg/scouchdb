@@ -593,6 +593,60 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       http(test all_docs).filter(_.startsWith("_design") == false).size should equal(sz + 3)
     }
   }
+  
+  describe("Create a document, query by id and requery for conditionalGet") {
+    
+    val s = Shop("Bloomingdale", "refrigerator", 12500)
+    val d = Doc(test, "bdl")
+    var ir:(String, String) = null
+    var ii:(String, String) = null
+    var nir:(String, String) = null
+    
+    it("creation should be successful") {
+      http(d add s)
+      ir = http(d ># %(Id._id, Id._rev))
+      ir._1 should equal("bdl")
+    }
+    it("query by id should fetch a row") {
+      ii = http(test getRef ir._1)
+      ii._1 should equal("bdl")
+    }
+    it("query by id and class should construct an object of that class") {
+      val sh = http(test.get[Shop](ir._1))
+      sh._1 should equal(ii._1)
+      sh._2 should equal(ii._2)
+      sh._3.toString should equal(s.toString)
+    }
+    it("query by id, rev and class should construct an object of that class") {
+      val st = http(test.get[Shop](ir._1, ir._2))
+      st._1 should equal(ir._1)
+      st._2 should equal(ir._2)
+      st._3.toString should equal(s.toString)
+    }
+    it("conditionalGet should give 304") {
+      try {
+        http(test.conditionalGet[Shop](ir._1, ir._2))
+      }
+      catch {
+        case e: dispatch.StatusCode =>
+          e.code should equal(304)
+      }
+    }
+    it("updating a document should change the revision") {
+      val t = Shop("Bloomingdale", "television", 22500)
+      http(d update(t, ir._2))
+      nir = http(d ># %(Id._id, Id._rev))
+      nir._1 should equal(ir._1)
+      nir._2 should not equal(ir._2)
+    }
+    it("subsequent conditionalGet should refetch and not throw") {
+      val sh = http(test.conditionalGet[Shop](ir._1, ir._2))
+      sh._1 should equal(ir._1)
+      sh._2 should equal(nir._2)
+      sh._3.item should equal("television")
+      sh._3.price should equal(22500)
+    }
+  }
 
   describe("Create a design document with pass thru validation function") {
     val all_pass = "function(newDoc, oldDoc, userCtx) {}"  // all valid

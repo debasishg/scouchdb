@@ -106,7 +106,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   import scala.reflect.Manifest
   
   /** get an entity of type <tt>T</tt> based on its id. Returns a 
-      <tt>Tuple3</tt> of (id, ref, T)
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt>
       @deprecated use <tt>get(id)</tt> instead */
   @deprecated def by_id[T](id: String)(implicit m: Manifest[T]) = 
     this / encode(id) ># {
@@ -119,7 +119,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
     }
   
   /** get an entity of type <tt>T</tt> based on its id. Returns a 
-      <tt>Tuple3</tt> of (id, ref, T) */
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> */
   def get[T](id: String)(implicit m: Manifest[T]) = 
     this / encode(id) ># {
       case s@_ => 
@@ -131,7 +131,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
     }
   
   /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
-      <tt>Tuple3</tt> of (id, ref, T) 
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> 
       @deprecated use <tt>get(id, rev)</tt> instead */
   @deprecated def by_id[T](id: String, rev: String)(implicit m: Manifest[T]) = 
     this / encode(id) <<? Map("rev" -> rev) ># {
@@ -144,7 +144,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
     }
   
   /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
-      <tt>Tuple3</tt> of (id, ref, T) */
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> */
   def get[T](id: String, rev: String)(implicit m: Manifest[T]) = 
     this / encode(id) <<? Map("rev" -> rev) ># {
       case s@_ => 
@@ -154,6 +154,20 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
         case (_, _, x) => (null, null, x.asInstanceOf[T])
       } 
     }
+  
+  /** conditional get with ETag support on revision of CouchDB. Returns a
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> if doing an actual fetch. Otherwise
+      throws a <tt>dispatch.StatusCode(304, _)</tt> */
+  def conditionalGet[T](id: String, rev: String)(implicit m: Manifest[T]) = {
+    this / encode(id) <:< Map("If-None-Match" -> ("\"" + rev + "\"")) ># {
+      case s@_ => 
+        val (id, ref) = getIdAndRef(s)
+        (id, ref, fromJSON(s, Some(m.erasure))) match {
+          case (Some(i), Some(r), x) => (i, r, x.asInstanceOf[T])
+          case (_, _, x) => (null, null, x.asInstanceOf[T])
+        }
+      }
+  }
 
   /** fetch the view for the query. The query can be built using the dsl as 
       specified in <tt>ViewQuery</tt> */
