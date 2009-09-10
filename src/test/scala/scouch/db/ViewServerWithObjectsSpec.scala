@@ -48,7 +48,7 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
        
       // query by id to get back the object
       // returns a tuple3 of (id, rev, object)
-      val (id, rev, item) = http(carDb.by_id[CarSaleItem]("bmw_mini_used_redwhiteblue"))
+      val (id, rev, item) = http(carDb.get[CarSaleItem]("bmw_mini_used_redwhiteblue"))
       
       id should equal("bmw_mini_used_redwhiteblue")
       item.make should equal("BMW")

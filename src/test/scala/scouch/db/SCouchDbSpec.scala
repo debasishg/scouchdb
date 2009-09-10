@@ -62,9 +62,9 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
        .size should equal (1)
     }
     it("query by id should fetch the document") {
-      val ir = http(test ref_by_id d._id)
+      val ir = http(test getRef d._id)
       ir._1 should equal(d._id)
-      val sh = http(test.by_id[DesignDocument](d._id))
+      val sh = http(test.get[DesignDocument](d._id))
       sh._1 should equal(d._id)
       sh._2 should equal(ir._2)
       sh._3._id should equal(sh._1)
@@ -84,9 +84,9 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
        .size should equal (1)
     }
     it("re-query by id should fetch the updated document") {
-      val ir = http(test ref_by_id d._id)
+      val ir = http(test getRef d._id)
       ir._1 should equal(d._id)
-      val sh = http(test.by_id[DesignDocument](d._id))
+      val sh = http(test.get[DesignDocument](d._id))
       sh._1 should equal(d._id)
       sh._2 should equal(nir._2)
       sh._3._id should equal(sh._1)
@@ -133,17 +133,17 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       ir._1 should equal("sstop")
     }
     it("query by id should fetch a row") {
-      ii = http(test ref_by_id ir._1)
+      ii = http(test getRef ir._1)
       ii._1 should equal("sstop")
     }
     it("query by id and class should construct an object of that class") {
-      val sh = http(test.by_id[Shop](ir._1))
+      val sh = http(test.get[Shop](ir._1))
       sh._1 should equal(ii._1)
       sh._2 should equal(ii._2)
       sh._3.toString should equal(s.toString)
     }
     it("query by id, rev and class should construct an object of that class") {
-      val st = http(test.by_id[Shop](ir._1, ir._2))
+      val st = http(test.get[Shop](ir._1, ir._2))
       st._1 should equal(ir._1)
       st._2 should equal(ir._2)
       st._3.toString should equal(s.toString)
@@ -156,7 +156,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       nir._2 should not equal(ir._2)
     }
     it("subsequent query by id and class should give changed value for the object's fields") {
-      val sh = http(test.by_id[Shop](ir._1))
+      val sh = http(test.get[Shop](ir._1))
       sh._1 should equal(ii._1)
       sh._2 should equal(nir._2)
       sh._3.item should equal("television")
@@ -181,11 +181,11 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       http(test all_docs).size should equal(sz + 1)
     }
     it("query by id should fetch a row") {
-      ii = http(test ref_by_id ir._1)
+      ii = http(test getRef ir._1)
       ii._1 should equal(ir._1)
     }
     it("query by id and class should construct an object of that class") {
-      val sh = http(test.by_id[Shop](ir._1))
+      val sh = http(test.get[Shop](ir._1))
       sh._1 should equal(ii._1)
       sh._2 should equal(ii._2)
       sh._3.toString should equal(s.toString)
@@ -194,7 +194,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       sh._3.price should equal(32500)
     }
     it("query by id, rev and class should construct an object of that class") {
-      val st = http(test.by_id[Shop](ir._1, ir._2))
+      val st = http(test.get[Shop](ir._1, ir._2))
       st._1 should equal(ir._1)
       st._2 should equal(ir._2)
       st._3.toString should equal(s.toString)
@@ -210,7 +210,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       nir._2 should not equal(ir._2)
     }
     it("subsequent query by id and class should give changed value for the object's fields") {
-      val sh = http(test.by_id[Shop](ir._1))
+      val sh = http(test.get[Shop](ir._1))
       sh._1 should equal(ii._1)
       sh._2 should equal(nir._2)
       sh._3.item should equal("air-conditioner")
@@ -234,11 +234,11 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       ir._1 should equal("contact_1")
     }
     it("query by id should fetch a row") {
-      ii = http(test ref_by_id ir._1)
+      ii = http(test getRef ir._1)
       ii._1 should equal("contact_1")
     }
     it("query by id and class should construct an object of that class") {
-      val sh = http(test.by_id[Contact](ir._1))
+      val sh = http(test.get[Contact](ir._1))
       sh._1 should equal(ii._1)
       sh._2 should equal(ii._2)
       sh._3.toString should equal(c1.toString)
@@ -259,11 +259,11 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       ir._1 should equal("prog_scala")
     }
     it("query by id should fetch a row") {
-      ii = http(test ref_by_id ir._1)
+      ii = http(test getRef ir._1)
       ii._1 should equal("prog_scala")
     }
     it("query by id and class should construct an object of that class") {
-      val sh = http(test.by_id[Book](ir._1))
+      val sh = http(test.get[Book](ir._1))
       sh._1 should equal(ii._1)
       sh._2 should equal(ii._2)
       sh._3.toString should equal(book.toString)
@@ -303,9 +303,9 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
        .size should equal (2)
     }
     it("query by id should fetch the document") {
-      val ir = http(test ref_by_id d._id)
+      val ir = http(test getRef d._id)
       ir._1 should equal(d._id)
-      val sh = http(test.by_id[DesignDocument](d._id))
+      val sh = http(test.get[DesignDocument](d._id))
       sh._1 should equal(d._id)
       sh._2 should equal(ir._2)
       sh._3._id should equal(sh._1)
@@ -325,9 +325,9 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
        .size should equal (2)
     }
     it("re-query by id should fetch the updated document") {
-      val ir = http(test ref_by_id d._id)
+      val ir = http(test getRef d._id)
       ir._1 should equal(d._id)
-      val sh = http(test.by_id[DesignDocument](d._id))
+      val sh = http(test.get[DesignDocument](d._id))
       sh._1 should equal(d._id)
       sh._2 should equal(nir._2)
       sh._3._id should equal(sh._1)
@@ -362,7 +362,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
     val vi = new View(mf, rf)
     
     it("should get design document with id = _design/lunch") {
-      val ir = http(test.by_id[DesignDocument]("_design/lunch"))
+      val ir = http(test.get[DesignDocument]("_design/lunch"))
       ir._1 should equal("_design/lunch")
       val d = ir._3
       val de = Doc(test, ir._1)
@@ -374,7 +374,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       nir._1 should equal(ir._1)
       nir._2 should not equal(ir._2)
       
-      val new_ir = http(test.by_id[DesignDocument]("_design/lunch"))
+      val new_ir = http(test.get[DesignDocument]("_design/lunch"))
       new_ir._3.views.keySet.size should equal(2)
     }
   }
@@ -491,7 +491,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       ir._1 should equal("sears")
     }
     it("query by id should fetch a row") {
-      ii = http(test ref_by_id ir._1)
+      ii = http(test getRef ir._1)
       ii._1 should equal("sears")
     }
     it("sticking an attachment should be successful") {
@@ -522,7 +522,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       http(d.getAttachment("foo") as_str) should equal(att)
     }
     it("query by id should fetch a row") {
-      ii = http(test ref_by_id "cc")
+      ii = http(test getRef "cc")
       ii._1 should equal("cc")
     }
     it("change an attachment") {

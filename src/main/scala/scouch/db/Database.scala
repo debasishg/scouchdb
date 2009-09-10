@@ -91,8 +91,13 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
     }
   }
   
+  /** fetch by id, returns a tuple (id, rev) 
+      @deprecated use <tt>getRef</tt> instead */
+  @deprecated def ref_by_id(id: String) = 
+    this / encode(id) ># %(Symbol("_id") ? str, Symbol("_rev") ? str)
+  
   /** fetch by id, returns a tuple (id, rev) */
-  def ref_by_id(id: String) = 
+  def getRef(id: String) = 
     this / encode(id) ># %(Symbol("_id") ? str, Symbol("_rev") ? str)
   
   /** fetch by id as an instance of the class <tt>clazz</tt>.
@@ -100,7 +105,10 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   import JsBean._
   import scala.reflect.Manifest
   
-  def by_id[T](id: String)(implicit m: Manifest[T]) = 
+  /** get an entity of type <tt>T</tt> based on its id. Returns a 
+      <tt>Tuple3</tt> of (id, ref, T)
+      @deprecated use <tt>get(id)</tt> instead */
+  @deprecated def by_id[T](id: String)(implicit m: Manifest[T]) = 
     this / encode(id) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
@@ -110,9 +118,34 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
       }
     }
   
-  /** fetch by id and rev as an instance of the class <tt>clazz</tt>.
-      Returns a Tuple3 of (id, rev, T) */
-  def by_id[T](id: String, rev: String)(implicit m: Manifest[T]) = 
+  /** get an entity of type <tt>T</tt> based on its id. Returns a 
+      <tt>Tuple3</tt> of (id, ref, T) */
+  def get[T](id: String)(implicit m: Manifest[T]) = 
+    this / encode(id) ># {
+      case s@_ => 
+        val (id, ref) = getIdAndRef(s)
+        (id, ref, fromJSON(s, Some(m.erasure))) match {  
+        case (Some(i), Some(r), x) => (i, r, x.asInstanceOf[T])
+        case (_, _, x) => (null, null, x.asInstanceOf[T])
+      }
+    }
+  
+  /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
+      <tt>Tuple3</tt> of (id, ref, T) 
+      @deprecated use <tt>get(id, rev)</tt> instead */
+  @deprecated def by_id[T](id: String, rev: String)(implicit m: Manifest[T]) = 
+    this / encode(id) <<? Map("rev" -> rev) ># {
+      case s@_ => 
+        val (id, ref) = getIdAndRef(s)
+        (id, ref, fromJSON(s, Some(m.erasure))) match {
+        case (Some(i), Some(r), x) => (i, r, x.asInstanceOf[T])
+        case (_, _, x) => (null, null, x.asInstanceOf[T])
+      } 
+    }
+  
+  /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
+      <tt>Tuple3</tt> of (id, ref, T) */
+  def get[T](id: String, rev: String)(implicit m: Manifest[T]) = 
     this / encode(id) <<? Map("rev" -> rev) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)

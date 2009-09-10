@@ -31,7 +31,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfter {
 
   private def deleteAllDocs {
     http(test all_docs)
-    .map(id => http(test ref_by_id id))
+    .map(id => http(test getRef id))
       .foreach{ir => http(Doc(test, ir._1).delete(ir._2))}
   }
   

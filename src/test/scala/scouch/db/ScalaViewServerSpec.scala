@@ -68,9 +68,9 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
       ir._1 should equal(d._id)
     }
     it("query by id should fetch the document") {
-      val ir = http(test ref_by_id d._id)
+      val ir = http(test getRef d._id)
       ir._1 should equal(d._id)
-      val sh = http(test.by_id[DesignDocument](d._id))
+      val sh = http(test.get[DesignDocument](d._id))
       sh._1 should equal(d._id)
       sh._2 should equal(ir._2)
       sh._3._id should equal(sh._1)
@@ -125,9 +125,9 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
       ir._1 should equal(d._id)
     }
     it("query by id should fetch the document") {
-      val ir = http(test ref_by_id d._id)
+      val ir = http(test getRef d._id)
       ir._1 should equal(d._id)
-      val sh = http(test.by_id[DesignDocument](d._id))
+      val sh = http(test.get[DesignDocument](d._id))
       sh._1 should equal(d._id)
       sh._2 should equal(ir._2)
       sh._3._id should equal(sh._1)
