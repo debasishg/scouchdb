@@ -14,6 +14,7 @@ import Options._
 class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter {
   
   val http = new Http
+//  val test = Db(Couch("localhost", "jchris", "secretpass"), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984
   val test = Db(Couch(), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984
 
   override def beforeAll {
@@ -156,57 +157,6 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter 
              .build))
       println(ls1)
       ls1.size should equal(3)
-    }
-  }
-
-  describe("Create a design document with pass thru validation function") {
-    
-    it("creation should be successful") {
-      val vfn = """(ndoc: dispatch.json.JsValue,
-        odoc: dispatch.json.JsValue, req: Any) => {}"""
-
-      val d = DesignDocument("foo_valid", null, Map[String, View](), vfn)
-      d.language = "scala"
-
-      val de = Doc(test, d._id)
-
-      d._id should equal("_design/foo_valid")
-      http(de add d)
-      val ir = http(de ># %(Id._id, Id._rev))
-      ir._1 should equal(d._id)
-    }
-    it("creation of a document should be successful") {
-      http(test doc Js("""{"item":"oranges","prices":{"Fresh Mart":1.99,"Price Max":3.19,"Citrus Circus":1.09}}"""))
-    }
-  }
-
-  describe("Create a design document with all fail validation function") {
-    
-    it("creation should be successful") {
-      val vfn = """(ndoc: dispatch.json.JsValue,
-        odoc: dispatch.json.JsValue, req: Any) => { throw new Exception("Cannot update"); }"""
-
-      val d = DesignDocument("foo_invalid", null, Map[String, View](), vfn)
-      d.language = "scala"
-
-      val de = Doc(test, d._id)
-
-      d._id should equal("_design/foo_invalid")
-      http(de add d)
-      val ir = http(de ># %(Id._id, Id._rev))
-      ir._1 should equal(d._id)
-    }
-    it("creation of a document should fail") {
-      intercept[dispatch.StatusCode] {
-        http(test doc Js("""{"item":"peaches","prices":{"Fresh Mart":1.99,"Price Max":3.19,"Citrus Circus":1.09}}"""))
-      }
-      try {
-        http(test doc Js("""{"item":"peaches","prices":{"Fresh Mart":1.99,"Price Max":3.19,"Citrus Circus":1.09}}"""))
-      }
-      catch {
-        case e: dispatch.StatusCode =>
-          e.code should equal(403)
-      }
     }
   }
 }
