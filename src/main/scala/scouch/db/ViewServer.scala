@@ -119,6 +119,7 @@ class ViewServer(val ps: PrintWriter) {
     JsValue.toJson(JsValue(List(true, rets)))
   }
 
+  import ViewServerUtils._
   def validate(funStr: String, newDoc: JsValue, 
     oldDoc: JsValue, req: Any): Either[String, JsValue] = {
     ps.println("in validate:" + funStr)
@@ -134,8 +135,10 @@ class ViewServer(val ps: PrintWriter) {
     } catch {
       case se: ScriptException =>
         Right(JsValue(Map("error" -> "validation_compilation_error", "reason" -> se.getMessage)))
-      case ex: Exception =>
-        Right(JsValue(Map("error" -> "forbidden", "reason" -> ex.getMessage)))
+      case vx: ValidationException =>
+        Right(JsValue(Map("error" -> "forbidden", "reason" -> vx.getMessage)))
+      case ux: AuthorizationException =>
+        Right(JsValue(Map("error" -> "unauthorized", "reason" -> ux.getMessage)))
     }
   }
 }
@@ -144,17 +147,17 @@ class ViewServer(val ps: PrintWriter) {
     entered in local.ini as the setting entry for the view server */
 import sjson.json.Util._
 object VS {
-
+  
   def main(args: Array[String]) {
     val v = 
       if (args.size < 1) new ViewServer(new PrintWriter(System.err))
       else new ViewServer(new PrintWriter(args(0)))
     v.log("starting view server")
 
-    val isr = new InputStreamReader(System.in)
+    val isr = new BufferedReader(new InputStreamReader(System.in))
     val p = new PrintWriter(System.out)
-    while (true) {
-      val s = readTillNl(isr)
+    var s = isr.readLine
+    while (s != null) {
       Js(s) match {
 
         // handle reset
@@ -268,10 +271,10 @@ object VS {
           p.write("[\"invalid input\"]")
           v.ps.close
       }
+      s = isr.readLine
     }
   }
 }
-
 
 /** Scala object for testing view server callbacks */
 import java.io._

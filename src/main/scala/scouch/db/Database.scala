@@ -21,17 +21,26 @@ trait Id extends Js {
 object Id extends Id
 
 /** Requests for a particular CouchDB host. */
-case class Couch(hostname: String, port: Int) extends Request(:/(hostname, port))
+case class Couch(hostname: String, port: Int, auth: Option[(String, String)]) 
+  extends Request(auth match {
+    case None => :/(hostname, port)
+    case Some(x) => :/(hostname, port).as (x._1, x._2). <:< (Map("Authorization" -> (x._1 + ":" + x._2)))
+  }) 
 
 /** Factory for a CouchDB Request host with common parameters */
 object Couch {
   def apply(): Couch = this("127.0.0.1")
-  def apply(hostname: String): Couch = Couch(hostname, 5984)
+  def apply(hostname: String): Couch = Couch(hostname, 5984, None)
+  def apply(hostname: String, user: String, pass: String): Couch = Couch(hostname, 5984, Some((user, pass)))
 }
 
 /** Requests on a particular database and CouchDB host. */
 case class Db(couch: Couch, name: String) extends Request(couch / name) with Js {
   val all_docs =  this / "_all_docs" ># ('rows ! list andThen { _ map 'id ! str })
+  
+  def session = {
+    this / "_session" ># ('name ! str)
+  }
   
   /** create a doc from an object with auto id generation */
   def doc[T <: AnyRef](obj: T) = {
