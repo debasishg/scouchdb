@@ -50,6 +50,7 @@ class ViewServer(val ps: PrintWriter) {
     ps.println("in reset")
     ps.flush
     fns.clear
+    System.gc
     true
   }
   
@@ -136,14 +137,14 @@ class ViewServer(val ps: PrintWriter) {
       case se: ScriptException =>
         Right(JsValue(Map("error" -> "validation_compilation_error", "reason" -> se.getMessage)))
       case vx: ValidationException =>
-        Right(JsValue(Map("error" -> "forbidden", "reason" -> vx.getMessage)))
+        Right(JsValue(Map("forbidden" -> vx.getMessage)))
       case ux: AuthorizationException =>
-        Right(JsValue(Map("error" -> "unauthorized", "reason" -> ux.getMessage)))
+        Right(JsValue(Map("unauthorized" -> ux.getMessage)))
     }
   }
 }
 
-/** comamnd line interface of the view server that interacts with couchdb. This has to be
+/** command line interface of the view server that interacts with couchdb. This has to be
     entered in local.ini as the setting entry for the view server */
 import sjson.json.Util._
 object VS {
@@ -152,18 +153,21 @@ object VS {
     val v = 
       if (args.size < 1) new ViewServer(new PrintWriter(System.err))
       else new ViewServer(new PrintWriter(args(0)))
+    
     v.log("starting view server")
 
     val isr = new BufferedReader(new InputStreamReader(System.in))
     val p = new PrintWriter(System.out)
+    
     var s = isr.readLine
     while (s != null) {
       Js(s) match {
 
-        // handle reset
-        case JsArray(List(JsString("reset"))) => {
+        // handle reset: reset has changed
+        // ["reset",{"reduce_limit":true}]
+        case JsArray(JsString("reset") :: _) => {
           p.write(JsValue.toJson(JsValue(v.reset)))
-          p.write("\n")
+          p.write('\n')
           p.flush
         }
 
@@ -172,12 +176,12 @@ object VS {
           v.add_fun(fn) match {
             case Left(true) => {
               p.write(JsValue.toJson(JsValue(true)))
-              p.write("\n")
+              p.write('\n')
               p.flush
             }
             case Right(x) => {
               p.write(JsValue.toJson(x))
-              p.write("\n")
+              p.write('\n')
               p.flush
             }
           }
@@ -186,7 +190,7 @@ object VS {
         // handle map_doc
         case JsArray(List(JsString("map_doc"), doc)) => {
           p.write(v.map_doc(doc))
-          p.write("\n")
+          p.write('\n')
           p.flush
         }
         
@@ -227,7 +231,7 @@ object VS {
               }
             }
           p.write(v.reduce(reduceFns, kids, vs))
-          p.write("\n")
+          p.write('\n')
           p.flush
         }
 
@@ -256,12 +260,12 @@ object VS {
           v.validate(fns, ndoc, odoc, req) match {
             case Left(s) => {
               p.write(s)
-              p.write("\n")
+              p.write('\n')
               p.flush
             }
             case Right(x) => {
               p.write(JsValue.toJson(x))
-              p.write("\n")
+              p.write('\n')
               p.flush
             }
           }
