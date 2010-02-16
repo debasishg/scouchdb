@@ -3,6 +3,8 @@ package scouch.db
 import org.scalatest.Spec
 import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
 import dispatch._
 import dispatch.json._
@@ -11,6 +13,8 @@ import sjson.json._
 import Options._
 
 import scouch.db.TestBeans._
+
+@RunWith(classOf[JUnitRunner])
 class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfter {
   
   val http = new Http

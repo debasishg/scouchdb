@@ -3,6 +3,8 @@ package scouch.db
 import org.scalatest.Spec
 import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
 import dispatch._
 import dispatch.json._
@@ -11,6 +13,7 @@ import dispatch.json.JsHttp._
 import Options._
 import BulkDocument._
 
+@RunWith(classOf[JUnitRunner])
 class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
   
 

@@ -3,6 +3,8 @@ package scouch.db
 import org.scalatest.Spec
 import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
 import dispatch._
 import dispatch.json._
@@ -12,6 +14,7 @@ import Options._
 
 import TestBeans._
 
+@RunWith(classOf[JUnitRunner])
 class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndAfter {
   
   val http = new Http
