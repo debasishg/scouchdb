@@ -13,17 +13,6 @@ h2. Running the Test Cases
  * mvn jar:test-jar ## will generate scouchdb-0.5-tests.jar : required for running the test cases
  * mvn exec:java ## will execute all test cases
 
-h2. Dependencies
-
- * "ScalaTest 0.9.5":http://www.artima.com/scalatest
- * "Scala 2.7.5":http://www.scala-lang.org/downloads
- * "Apache HTTP Client 4.0-beta1":http://hc.apache.org/httpclient-3.x
- * "Apache HTTP Core 4.0":http://hc.apache.org/httpcomponents-core
- * "dispatch-http-0.5.2":http://databinder.net/dispatch/Download
- * "dispatch-json-0.5.2":http://databinder.net/dispatch/Download
- * "sjson-0.1":http://github.com/debasishg/sjson/tree/master
- * CouchDB 0.9
-
 h1. License
 
 <pre>
