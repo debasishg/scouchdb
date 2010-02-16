@@ -11,7 +11,7 @@ h2. Running the Test Cases
 
  * Ensure that the Scala View Server is set up as per the document "Scala View Server":http://wiki.github.com/debasishg/scouchdb/scala-view-server
  * mvn jar:test-jar ## will generate scouchdb-0.5-tests.jar : required for running the test cases
- * mvn exec:java ## will execute all test cases
+ * mvn test ## will execute all test cases
 
 h1. License
 
