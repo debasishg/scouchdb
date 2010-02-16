@@ -1,13 +1,14 @@
 package scouch.db
 
 import java.net.URLEncoder.encode
-import sjson.json._
 import sjson.json.Implicits._
 import dispatch._
 import dispatch.json._
 import dispatch.json.Js._
+import JsHttp._
 import RichRequest._
 import DbUtils._
+import sjson.json._
 
 /** Extractors for CouchDB document id and revsion properties.
     Extend with your own document properties. */

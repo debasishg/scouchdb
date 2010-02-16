@@ -2,17 +2,17 @@ package scouch.db
 
 import org.scalatest.Spec
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FeatureSuite
 import org.scalatest.matchers.ShouldMatchers
+
+import dispatch._
+import dispatch.json._
+import dispatch.json.JsHttp._
 
 import Options._
 import BulkDocument._
 
 class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
   
-  import dispatch._
-  import dispatch.json._
-  import dispatch.json.Js._
 
   val http = new Http
   val test = Db(Couch(), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984

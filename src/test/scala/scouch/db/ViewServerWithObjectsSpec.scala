@@ -2,12 +2,11 @@ package scouch.db
 
 import org.scalatest.Spec
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FeatureSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import dispatch._
 import dispatch.json._
-import dispatch.json.Js._
+import dispatch.json.JsHttp._
 import sjson.json._
 import Options._
 

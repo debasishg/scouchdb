@@ -4,6 +4,7 @@ import javax.script.ScriptException;
 
 import scala.collection.mutable.ArrayBuffer
 import dispatch.json._
+import sjson.json._
 
 import java.io._
 
@@ -93,7 +94,7 @@ class ViewServer(val ps: PrintWriter) {
       }
     try {
       import sjson.json.Implicits._
-      sjson.json.JsBean.toJSON(res.reverse)
+      JsBean.toJSON(res.reverse)
     } catch {
       case e: Exception =>
         e.printStackTrace(ps)

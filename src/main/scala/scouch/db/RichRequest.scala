@@ -22,17 +22,19 @@ class Post(val value: Any, val contentType: Option[String]) extends HttpPost {
 object RichRequest {
   class RichRequest(req: Request) {
     /** Post the given body and return response wrapper. (new request, mimics) */
-    def << (body: Any) = req.next { req.mimic(new Post(body, None))_ }
+    def << (body: Any) = req.next { 
+      Request.mimic(new Post(body, None))_ 
+    }
     
     /** Post the given body with the specified contentType and return response wrapper. (new request, mimics) */
-    def << (body: Any, contentType: String) = req.next { req.mimic(new Post(body, Some(contentType)))_ }
+    def << (body: Any, contentType: String) = req.next { Request.mimic(new Post(body, Some(contentType)))_ }
     
     /** Put the given object and return response wrapper. (new request, mimics) */
     def put (body: Array[Byte], contentType: String) = req.next {
       val m = new HttpPut
       m setEntity new ByteArrayEntity(body)
       HttpProtocolParams.setUseExpectContinue(m.getParams, false)
-      req.mimic(m)_
+      Request.mimic(m)_
     }
   }
   implicit def enrichRequest(req: Request) = new RichRequest(req)
