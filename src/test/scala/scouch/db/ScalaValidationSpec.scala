@@ -193,7 +193,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfter {
         import scouch.db.ViewServerUtils._
         def require(fields: List[String]) = {
           fields.foreach(f =>
-            if (f == "null" || f.length == 0)
+            if (f == null || f == "null" || f.length == 0)
               throw new ValidationException("Cannot allow"))
         }
 

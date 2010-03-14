@@ -141,6 +141,10 @@ class ViewServer(val ps: PrintWriter) {
         Right(JsValue(Map("forbidden" -> vx.getMessage)))
       case ux: AuthorizationException =>
         Right(JsValue(Map("unauthorized" -> ux.getMessage)))
+      case x: Exception =>
+        x.printStackTrace(ps)
+        ps.flush
+        Right(JsValue(Map("dummy" -> x.getMessage)))
     }
   }
 }

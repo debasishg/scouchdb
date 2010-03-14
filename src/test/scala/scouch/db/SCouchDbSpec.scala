@@ -466,7 +466,6 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
     it("should fetch all docs") {
       val ls1 = http(test view(
         Views builder("_all_docs") build))
-      println(ls1)
       ls1.size should equal(9)
     }
     it("include_docs should also fetch documents as well") {
