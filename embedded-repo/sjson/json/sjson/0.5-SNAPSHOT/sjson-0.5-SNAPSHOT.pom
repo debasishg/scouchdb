@@ -1,15 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>scouch.db</groupId>
-  <artifactId>scouchdb</artifactId>
+  <groupId>sjson.json</groupId>
+  <artifactId>sjson</artifactId>
   <packaging>jar</packaging>
-  <version>0.6-SNAPSHOT</version>
-  <name>scouchdb</name>
+  <version>0.5-SNAPSHOT</version>
+  <name>sjson</name>
 
   <properties>
-    <scouchdb.version>0.6-SNAPSHOT</scouchdb.version>
-    <scouchdb.groupId>scouchdb</scouchdb.groupId>
+    <sjson.version>0.5-SNAPSHOT</sjson.version>
+    <sjson.groupId>sjson</sjson.groupId>
     <scala.version>2.7.7</scala.version>
   </properties>
 
@@ -42,7 +42,7 @@
       <url>http://scala-tools.org/repo-releases</url>
     </repository>
     <repository>
-      <id>databinder.net/repo</id>
+      <id>databinder.net/repo/</id>
       <name>dbDispatch Repository for Maven</name>
       <url>http://databinder.net/repo</url>
       <snapshots>
@@ -65,7 +65,7 @@
 
   <build>
     <sourceDirectory>src/main/scala</sourceDirectory>
-    <testSourceDirectory>src/test/scala</testSourceDirectory>
+    <testSourceDirectory>src/test/scala/sjson/json</testSourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -74,7 +74,6 @@
         <configuration>
           <source>1.5</source>
           <target>1.5</target>
-	  <showDeprecation>true</showDeprecation>
         </configuration>
       </plugin>
       <plugin>
@@ -107,18 +106,18 @@
           </execution>
         </executions>
         <configuration>
-          <mainClass>scouch.db.Driver</mainClass>
+          <mainClass>sjson.json.Driver</mainClass>
           <classpathScope>test</classpathScope>
         </configuration>
       </plugin>
       <plugin>
-	<artifactId>maven-surefire-plugin</artifactId>
-	<configuration>
-	  <includes>
-	    <include>**/*Spec.java</include>
-	  </includes>
-	</configuration>
-      </plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>**/*Spec.java</include>
+          </includes>
+        </configuration>
+      </plugin> 
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
@@ -164,17 +163,10 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <archive>
             <manifestEntries>
-              <scouchdb_version>${scouchdb.version}</scouchdb_version>
+              <akka_version>${akka.version}</akka_version>
             </manifestEntries>
           </archive>
         </configuration>
@@ -246,6 +238,11 @@
   <url>http://maven.apache.org</url>
   <dependencies>
      <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>1.4</version>
+     </dependency>
+     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>2.7.7</version>
@@ -256,41 +253,10 @@
       <version>0.6.5</version>
     </dependency>
     <dependency>
-      <groupId>net.databinder</groupId>
-      <artifactId>dispatch-http_2.7.7</artifactId>
-      <version>0.6.5</version>
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>1.2</version>
     </dependency>
-    <dependency>
-      <groupId>net.databinder</groupId>
-      <artifactId>dispatch-http-json_2.7.7</artifactId>
-      <version>0.6.5</version>
-    </dependency>
-    <dependency>
-      <groupId>sjson.json</groupId>
-      <artifactId>sjson</artifactId>
-      <version>0.5-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.0-beta1</version>
-    </dependency>
-      <dependency>
-      <groupId>httpcomponents-httpcore</groupId>
-      <artifactId>jakarta-httpcore</artifactId>
-      <version>4.0-alpha2</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-compiler</artifactId>
-      <version>2.7.7</version>
-    </dependency>
-    
     <!-- For Testing -->
     <dependency>
       <groupId>org.scalatest</groupId>
