@@ -10,8 +10,11 @@ The primary motivation for making scouchdb is to offer a form of CouchDB driver 
 h2. Running the Test Cases
 
  * Ensure that the Scala View Server is set up as per the document "Scala View Server":http://wiki.github.com/debasishg/scouchdb/scala-view-server
- * mvn jar:test-jar ## will generate scouchdb-0.5-tests.jar : required for running the test cases
- * mvn test ## will execute all test cases
+ * run couchdb server
+ * sbt
+ * clean
+ * compile
+ * test-only scouch.db.SCouchDbSpec
 
 h1. License
 
