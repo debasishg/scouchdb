@@ -45,15 +45,15 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   
   /** create a doc from an object with auto id generation */
   def doc[T <: AnyRef](obj: T) = {
-    this << JsBean.toJSON(obj) >#  %('id ! str, 'rev ! str)
+    this <:< Map("Content-Type" -> "application/json") << JsBean.toJSON(obj) >#  %('id ! str, 'rev ! str)
   }
   
   /** create a doc from an object with auto id generation */
   def doc(obj: JsValue) = {
-    this << obj >#  %('id ! str, 'rev ! str)
+    this <:< Map("Content-Type" -> "application/json") << obj >#  %('id ! str, 'rev ! str)
   }
 
-  val create = this <<< Nil >|
+  val create = this <<< Nil.mkString >|
   val delete = DELETE >|
     
   
@@ -64,7 +64,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
       if (allOrNothing) JsValue.toJson(JsValue(Map("docs" -> objs.map(x => Js(JsBean.toJSON(x))), "all_or_nothing" -> true)))
       else JsValue.toJson(JsValue(Map("docs" -> objs.map(x => Js(JsBean.toJSON(x))))))
     
-    this / "_bulk_docs" << docStr ># {
+    this / "_bulk_docs" <:< Map("Content-Type" -> "application/json") << docStr ># {
       case JsArray(l) => l map %('id ! str, 'rev ! str)
       case s => throw new IllegalArgumentException("invalid data " + s)
     }
@@ -95,7 +95,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
       if (allOrNothing) JsValue.toJson(JsValue(Map("docs" -> all, "all_or_nothing" -> true)))
       else JsValue.toJson(JsValue(Map("docs" -> all)))
     
-    this / "_bulk_docs" << docStr ># {
+    this / "_bulk_docs" <:< Map("Content-Type" -> "application/json") << docStr ># {
       case JsArray(l) => l map %('id ! str, 'rev ! str)
       case s => throw new IllegalArgumentException("invalid data " + s)
     }
@@ -103,12 +103,12 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   
   /** fetch by id, returns a tuple (id, rev) 
       @deprecated use <tt>getRef</tt> instead */
-  @deprecated def ref_by_id(id: String) = 
-    this / encode(id) ># %(Symbol("_id") ? str, Symbol("_rev") ? str)
+      @deprecated("use getRef instead") def ref_by_id(id: String) = 
+    this / encode(id, Request.factoryCharset) ># %(Symbol("_id") ? str, Symbol("_rev") ? str)
   
   /** fetch by id, returns a tuple (id, rev) */
   def getRef(id: String) = 
-    this / encode(id) ># %(Symbol("_id") ? str, Symbol("_rev") ? str)
+    this / encode(id, Request.factoryCharset) ># %(Symbol("_id") ? str, Symbol("_rev") ? str)
   
   /** fetch by id as an instance of the class <tt>clazz</tt>.
       Returns a Tuple3 of (id, rev, T) */
@@ -118,8 +118,8 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   /** get an entity of type <tt>T</tt> based on its id. Returns a 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt>
       @deprecated use <tt>get(id)</tt> instead */
-  @deprecated def by_id[T](id: String)(implicit m: Manifest[T]) = 
-    this / encode(id) ># {
+  @deprecated("use get(id) instead") def by_id[T](id: String)(implicit m: Manifest[T]) = 
+    this / encode(id, Request.factoryCharset) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
         (id, ref, fromJSON(s, Some(m.erasure))) match {  
@@ -131,7 +131,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   /** get an entity of type <tt>T</tt> based on its id. Returns a 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> */
   def get[T](id: String)(implicit m: Manifest[T]) = 
-    this / encode(id) ># {
+    this / encode(id, Request.factoryCharset) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
         (id, ref, fromJSON(s, Some(m.erasure))) match {  
@@ -143,8 +143,8 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> 
       @deprecated use <tt>get(id, rev)</tt> instead */
-  @deprecated def by_id[T](id: String, rev: String)(implicit m: Manifest[T]) = 
-    this / encode(id) <<? Map("rev" -> rev) ># {
+  @deprecated("use get(id, rev) instead") def by_id[T](id: String, rev: String)(implicit m: Manifest[T]) = 
+    this / encode(id, Request.factoryCharset) <<? Map("rev" -> rev) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
         (id, ref, fromJSON(s, Some(m.erasure))) match {
@@ -156,7 +156,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> */
   def get[T](id: String, rev: String)(implicit m: Manifest[T]) = 
-    this / encode(id) <<? Map("rev" -> rev) ># {
+    this / encode(id, Request.factoryCharset) <<? Map("rev" -> rev) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
         (id, ref, fromJSON(s, Some(m.erasure))) match {
@@ -169,7 +169,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> if doing an actual fetch. Otherwise
       throws a <tt>dispatch.StatusCode(304, _)</tt> */
   def conditionalGet[T](id: String, rev: String)(implicit m: Manifest[T]) = {
-    this / encode(id) <:< Map("If-None-Match" -> ("\"" + rev + "\"")) ># {
+    this / encode(id, Request.factoryCharset) <:< Map("If-None-Match" -> ("\"" + rev + "\"")) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
         (id, ref, fromJSON(s, Some(m.erasure))) match {
@@ -256,7 +256,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
 
 
 /** Requests on a particular document in a particular database. */
-case class Doc(val db: Db, val id: String) extends Request(db / encode(id)) with Js {
+case class Doc(val db: Db, val id: String) extends Request(db / encode(id, Request.factoryCharset)) with Js {
   
   /** add an object (bean) to the document */
   def add[T <: AnyRef](obj: T) = {
@@ -265,22 +265,22 @@ case class Doc(val db: Db, val id: String) extends Request(db / encode(id)) with
   
   /** add attachment to a document. None as the <tt>rev</tt> will create a new document
       as well */
-  def attach(attachmentId: String, contentType: String, data: Array[byte], rev: Option[String]) = rev match {
+  def attach(attachmentId: String, contentType: String, data: Array[Byte], rev: Option[String]) = rev match {
     case Some(r) =>
-      this / (encode(attachmentId) + Http.?(Map("rev" -> r))) put (data, contentType) >|
+      this / (encode(attachmentId, Request.factoryCharset) + Http.?(Map("rev" -> r))) put (data, contentType) >|
     case None =>
-      this / encode(attachmentId) put (data, contentType) >|
+      this / encode(attachmentId, Request.factoryCharset) put (data, contentType) >|
   }
   
   /** fetch the attachment having id as <tt>attachmentId</tt> */
   def getAttachment(attachmentId: String) = {
-    this / encode(attachmentId)
+    this / encode(attachmentId, Request.factoryCharset)
   }
   
   /** delete the attachment specified by the id <tt>attachmentId</tt> for the revision
       <tt>rev</tt> of the current document */
   def deleteAttachment(attachmentId: String, rev: String) = {
-    (this / encode(attachmentId) DELETE) <<? Map("rev" -> rev)  >|
+    (this / encode(attachmentId, Request.factoryCharset) DELETE) <<? Map("rev" -> rev)  >|
   }
   
   /** update the document of specified revision, with the specified object */
@@ -291,7 +291,7 @@ case class Doc(val db: Db, val id: String) extends Request(db / encode(id)) with
     }
   }
     
-  def update(js: JsValue) = this <<< js ># {
+  def update(js: JsValue) = this <<< JsValue.toJson(js) ># {
     case Updated.rev(rev) => (Id._rev << rev)(js)
   }
   private object Updated { val rev = 'rev ? str }

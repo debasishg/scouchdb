@@ -1,7 +1,7 @@
 package scouch.db
 
 import org.scalatest.Spec
-import org.scalatest.BeforeAndAfter
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -15,7 +15,7 @@ import Options._
 import scouch.db.TestBeans._
 
 @RunWith(classOf[JUnitRunner])
-class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfter {
+class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEach {
   
   val http = new Http
   val test = Db(Couch(), "test")
@@ -59,6 +59,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfter {
     }
   }
 
+  /**
   describe("Add a validation function and check specific validation of documents") {
 
     it("should allow creation of televisions but not air-conditioners") {
@@ -287,4 +288,5 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfter {
       }
     }
   }
+**/
 }

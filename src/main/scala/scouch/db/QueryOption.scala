@@ -2,35 +2,66 @@ package scouch.db
 
 import dispatch.json._
 
-case class QueryOption[T](key: String, value: T)
+trait QueryOption[T] {
+  val key: String
+  val value: T
+}
 
-case class Key(override val value: JsValue) extends QueryOption("key", value)
+case class Key(value: JsValue) extends QueryOption[JsValue] {
+  val key = "key"
+}
 
-case class StartKey(override val value: JsValue) extends QueryOption("startkey", value)
+case class StartKey(value: JsValue) extends QueryOption[JsValue] {
+  val key = "startkey"
+}
 
-case class StartKeyDocId(override val value: String) extends QueryOption("startkey_docid", value)
+case class StartKeyDocId(value: String) extends QueryOption[String] {
+  val key = "startKey_docid"
+}
 
-case class EndKey(override val value: JsValue) extends QueryOption("endkey", value)
+case class EndKey(value: JsValue) extends QueryOption[JsValue] {
+  val key = "endkey"
+}
 
-case class EndKeyDocId(override val value: String) extends QueryOption("endkey_docid", value)
+case class EndKeyDocId(value: String) extends QueryOption[String] {
+  val key = "endKey_docid"
+}
 
-case class Limit(override val value: Int) extends QueryOption("limit", value)
+case class Limit(value: Int) extends QueryOption[Int] {
+  val key = "limit"
+}
 
-case class Update(override val value: Boolean) extends QueryOption("update", value)
+case class Update(value: Boolean) extends QueryOption[Boolean] {
+  val key = "update"
+}
 
-case class Descending(override val value: Boolean) extends QueryOption("descending", value)
+case class Descending(value: Boolean) extends QueryOption[Boolean] {
+  val key = "descending"
+}
 
-case class Skip(override val value: Int) extends QueryOption("skip", value)
+case class Skip(value: Int) extends QueryOption[Int] {
+  val key = "skip"
+}
 
-case class Group(override val value: Boolean) extends QueryOption("group", value)
+case class Group(value: Boolean) extends QueryOption[Boolean] {
+  val key = "group"
+}
 
-case class GroupLevel(override val value: Int) extends QueryOption("group_level", value)
+case class GroupLevel(value: Int) extends QueryOption[Int] {
+  val key = "group_level"
+}
 
-case class Reduce(override val value: Boolean) extends QueryOption("reduce", value)
+case class Reduce(value: Boolean) extends QueryOption[Boolean] {
+  val key = "reduce"
+}
 
-case class IncludeDocs(override val value: Boolean) extends QueryOption("include_docs", value)
+case class IncludeDocs(value: Boolean) extends QueryOption[Boolean] {
+  val key = "include_docs"
+}
 
-case class Stale(override val value: Boolean) extends QueryOption("stale", value)
+case class Stale(value: Boolean) extends QueryOption[Boolean] {
+  val key = "stale"
+}
 
 
 import org.apache.http.client.utils.URLEncodedUtils

@@ -22,6 +22,13 @@ class ViewServer(val ps: PrintWriter) {
   
   val s = new Settings
   s.classpath.value_=(System.getProperty("CDB_VIEW_CLASSPATH"))
+
+  // val origBootclasspath = s.bootclasspath.value
+  // val compilerPath = jarPathOfClass("scala.tools.nsc.Interpreter")
+  // val libPath = jarPathOfClass("scala.ScalaObject")
+  // val pathList = List(jarPathOfClass(compilerPath), jarPathOfClass(libPath))
+  // ps.println("pathList = " + pathList)
+  // settings.bootclasspath.value = (origBootclasspath :: pathList).mkString(java.io.File.separator)
   
   /** The passed in <tt>PrintWriter</tt> is also used to log any message
       that the Scala interpreter spits out */
@@ -44,6 +51,14 @@ class ViewServer(val ps: PrintWriter) {
       case Error => throw new ScriptException("error in: '" + code)
       case Incomplete => throw new ScriptException("incomplete in :'" + code)
     }
+  }
+
+  def jarPathOfClass(className: String) = {
+    val resource = className.split('.').mkString("/", "/", ".class")
+    val path = getClass.getResource(resource).getPath
+    val indexOfFile = path.indexOf("file:")
+    val indexOfSeparator = path.lastIndexOf('!')
+    path.substring(indexOfFile, indexOfSeparator)
   }
   
   /** callback for handling reset */
@@ -261,6 +276,12 @@ object VS {
          *  $COUCH_HOME/test/query_server_spec.rb
          */
         case JsArray(List(JsString("validate"), JsString(fns), ndoc, odoc, req)) => {
+          p.write("in validate")
+          p.write("fns = " + fns)
+          p.write("odoc = " + odoc)
+          p.write("ndoc = " + ndoc)
+          p.write("req = " + req)
+          p.flush
 
           v.validate(fns, ndoc, odoc, req) match {
             case Left(s) => {
@@ -278,6 +299,9 @@ object VS {
 
         case _ =>
           p.write("[\"invalid input\"]")
+          p.write("s = " + s)
+          p.write("***********************************")
+          p.flush
           v.ps.close
       }
       s = isr.readLine

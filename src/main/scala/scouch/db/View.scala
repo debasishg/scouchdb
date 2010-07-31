@@ -1,15 +1,16 @@
 package scouch.db
 
 import scala.reflect._
+import scala.annotation.target._
 
 import sjson.json._
 
 @BeanInfo
 case class View(
-  @JSONProperty {val ignoreIfNull = true}
+  @(JSONProperty @getter)(ignoreIfNull = true)
   val map: String, 
   
-  @JSONProperty {val ignoreIfNull = true}
+  @(JSONProperty @getter)(ignoreIfNull = true)
   val reduce: String) {
   
   private [db] def this() = this(null, null)

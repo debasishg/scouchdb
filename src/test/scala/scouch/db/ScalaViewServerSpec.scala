@@ -1,7 +1,7 @@
 package scouch.db
 
 import org.scalatest.Spec
-import org.scalatest.BeforeAndAfter
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -13,7 +13,7 @@ import sjson.json._
 import Options._
 
 @RunWith(classOf[JUnitRunner])
-class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfter {
+class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfterAll {
   
   val http = new Http
 //  val test = Db(Couch("localhost", "jchris", "secretpass"), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984

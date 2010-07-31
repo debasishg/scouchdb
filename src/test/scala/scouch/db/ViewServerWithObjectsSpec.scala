@@ -1,7 +1,7 @@
 package scouch.db
 
 import org.scalatest.Spec
-import org.scalatest.BeforeAndAfter
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -15,7 +15,7 @@ import Options._
 import TestBeans._
 
 @RunWith(classOf[JUnitRunner])
-class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndAfter {
+class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
   
   val http = new Http
   val carDb = Db(Couch(), "car_inventory_db") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984
@@ -107,7 +107,7 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
           JsBean.fromJSON(x_, Some(classOf[CarSaleItem]))
         }
       objs.size should equal(3)
-      objs.map(_.make).sort((e1, e2) => (e1 compareTo e2) < 0) should equal(List("BMW", "Geo", "Honda"))
+      objs.map(_.make).sortWith((e1, e2) => (e1 compareTo e2) < 0) should equal(List("BMW", "Geo", "Honda"))
     }
   }
   
@@ -117,14 +117,15 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
         Views builder("car_views/red_cars") build, classOf[CarSaleItem]))
       println(ls1)
       ls1.size should equal(3)
-      ls1.map(_.make).sort((e1, e2) => (e1 compareTo e2) < 0) should equal(List("BMW", "Geo", "Honda"))
+      ls1.map(_.make).sortWith((e1, e2) => (e1 compareTo e2) < 0) should equal(List("BMW", "Geo", "Honda"))
     }
     it ("should create 3 number objects from 3 items in map return") {
       val ls1 = http(carDb view(
         Views builder("car_views/red_cars_price") build, classOf[BigDecimal]))
       println(ls1)
       ls1.size should equal(3)
-      ls1.sort((e1, e2) => (e1 compareTo e2) < 0) should equal(List(7500, 12500, 16000))
+      // ls1.sort((e1, e2) => (e1 compareTo e2) < 0) should equal(List(7500, 12500, 16000))
+      ls1.sortWith((e1, e2) => (e1 < e2)) should equal(List(7500, 12500, 16000))
     }
   }
   

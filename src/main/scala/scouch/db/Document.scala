@@ -2,6 +2,7 @@ package scouch.db
 
 import sjson.json._ 
 import scala.reflect._
+import scala.annotation.target._
 
 object DesignDocument {
   val PREFIX = "_design/"
@@ -15,14 +16,14 @@ object DesignDocument {
 @BeanInfo
 case class DesignDocument(var _id: String, 
                           
-                          @JSONProperty("") {val ignoreIfNull = true, val ignore = false } 
+                          @(JSONProperty @getter)(ignoreIfNull = true, ignore = false)
                           _rev: String, 
                           
-                          @OptionTypeHint(classOf[Map[_,_]])
-                          @JSONTypeHint(classOf[View])
+                          @(OptionTypeHint @field)(value = classOf[Map[_,_]])
+                          @(JSONTypeHint @field)(value = classOf[View])
                           views: Map[String, View],
                           
-                          @JSONProperty("") { val ignoreIfNull = true, val ignore = false }
+                          @(JSONProperty @getter)(ignoreIfNull = true, ignore = false)
                           validate_doc_update: String) {
   if (_id != null) 
     if (!_id.startsWith(DesignDocument.PREFIX))

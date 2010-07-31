@@ -1,7 +1,7 @@
 package scouch.db
 
 import org.scalatest.Spec
-import org.scalatest.BeforeAndAfter
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -14,7 +14,7 @@ import Options._
 import BulkDocument._
 
 @RunWith(classOf[JUnitRunner])
-class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfter {
+class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
   
 
   val http = new Http
