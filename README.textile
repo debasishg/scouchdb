@@ -12,6 +12,7 @@ h2. Running the Test Cases
  * Ensure that the Scala View Server is set up as per the document "Scala View Server":http://wiki.github.com/debasishg/scouchdb/scala-view-server
  * run couchdb server
  * sbt
+ * update
  * clean
  * compile
  * test-only scouch.db.SCouchDbSpec

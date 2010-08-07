@@ -9,8 +9,8 @@ lib_managed
 etags
 TAGS
 dist
-build
 target
+build/target
 deploy/*.jar
 data
 out
