@@ -32,7 +32,9 @@ object RichRequest {
     /** Put the given object and return response wrapper. (new request, mimics) */
     def put (body: Array[Byte], contentType: String) = req.next {
       val m = new HttpPut
-      m setEntity new ByteArrayEntity(body)
+      val entity = new ByteArrayEntity(body)
+      entity.setContentType(contentType)
+      m setEntity entity
       HttpProtocolParams.setUseExpectContinue(m.getParams, false)
       Request.mimic(m)_
     }
