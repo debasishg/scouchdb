@@ -10,7 +10,7 @@ class SCouchDbProject(info: ProjectInfo) extends DefaultProject(info)
   val dispatch_http = "net.databinder" % "dispatch-http_2.8.0" % "0.7.4" % "compile"
   val commons_logging = "commons-logging" % "commons-logging" % "1.1.1" % "compile"
   val httpclient = "org.apache.httpcomponents" % "httpclient" % "4.0.1" % "compile"
-  val sjson = "sjson.json" % "sjson" % "0.7" % "compile"
+  val sjson = "sjson.json" % "sjson" % "0.8" % "compile"
 
   val scalatest =
     buildScalaVersion match {
