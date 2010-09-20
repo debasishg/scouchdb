@@ -4,7 +4,7 @@ import sjson.json._
 import scala.reflect._
 import scala.annotation.target._
 
-object DesignDocument {
+object DesignDocumentX {
   val PREFIX = "_design/"
   
   def extendId(id: String) = 
@@ -24,12 +24,13 @@ case class DesignDocument(var _id: String,
                           views: Map[String, View],
                           
                           @(JSONProperty @getter)(ignoreIfNull = true, ignore = false)
-                          validate_doc_update: String) {
+                          validate_doc_update: String, 
+                          language: String = "javascript") {
   if (_id != null) 
-    if (!_id.startsWith(DesignDocument.PREFIX))
-      _id = DesignDocument.extendId(_id)
+    if (!_id.startsWith(DesignDocumentX.PREFIX))
+      _id = DesignDocumentX.extendId(_id)
   
-  var language = "javascript"
+  // var language = "javascript"
   
   private [db] def this() = this(null, null, Map[String, View](), null)
   
@@ -48,4 +49,11 @@ case class DesignDocument(var _id: String,
       }
     )
   }
+}
+
+object DesignDocumentFormats {
+  import sjson.json.DefaultProtocol._
+  import ViewFormats._
+  implicit val DesignDocumentFormat: Format[DesignDocument] =
+    asProduct5("_id", "_rev", "views", "validate_doc_update", "language")(DesignDocument)(DesignDocument.unapply(_).get)
 }

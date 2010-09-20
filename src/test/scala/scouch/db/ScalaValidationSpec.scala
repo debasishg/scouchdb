@@ -46,8 +46,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
       val vfn = """(ndoc: dispatch.json.JsValue,
         odoc: dispatch.json.JsValue, req: Any) => {}"""
 
-      val d = DesignDocument("foo_1", null, Map[String, View](), vfn)
-      d.language = "scala"
+      val d = DesignDocument("foo_1", null, Map[String, View](), vfn, "scala")
 
       val de = Doc(test, d._id)
 

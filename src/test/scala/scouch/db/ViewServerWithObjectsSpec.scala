@@ -73,11 +73,9 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       val redCarsView = new View(redCars, null)
       val redCarsPriceView = new View(redCarsPrice, null)
 
-      val cv = DesignDocument("car_views", null, Map[String, View](), null)
-      cv.language = "scala"
+      val cv = DesignDocument("car_views", null, Map[String, View](), null, "scala")
 
-      val rcv = DesignDocument(cv._id, null, Map("red_cars" -> redCarsView, "red_cars_price" -> redCarsPriceView), null)
-      rcv.language = "scala"
+      val rcv = DesignDocument(cv._id, null, Map("red_cars" -> redCarsView, "red_cars_price" -> redCarsPriceView), null, "scala")
       http(Doc(carDb, rcv._id) add rcv)
 
       val ls1 = http(carDb view(
@@ -145,11 +143,9 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       
       val redCarsPriceView = new View(redCarsPrice, redfn1)
 
-      val cv = DesignDocument("red_car_views", null, Map[String, View](), null)
-      cv.language = "scala"
+      val cv = DesignDocument("red_car_views", null, Map[String, View](), null, "scala")
 
-      val rcv = DesignDocument(cv._id, null, Map("red_cars_price" -> redCarsPriceView), null)
-      rcv.language = "scala"
+      val rcv = DesignDocument(cv._id, null, Map("red_cars_price" -> redCarsPriceView), null, "scala")
       http(Doc(carDb, rcv._id) add rcv)
 
       val ls2 = http(carDb view(
@@ -176,11 +172,9 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       
       val redCarsPriceView = new View(mapForRedCars, reduceToPriceSum)
 
-      val cv = DesignDocument("sum_car_views", null, Map[String, View](), null)
-      cv.language = "scala"
+      val cv = DesignDocument("sum_car_views", null, Map[String, View](), null, "scala")
 
-      val rcv = DesignDocument(cv._id, null, Map("red_cars_sum_price" -> redCarsPriceView), null)
-      rcv.language = "scala"
+      val rcv = DesignDocument(cv._id, null, Map("red_cars_sum_price" -> redCarsPriceView), null, "scala")
       http(Doc(carDb, rcv._id) add rcv)
 
       val ls1 = http(carDb view(
@@ -215,11 +209,9 @@ class ViewServerWithObjectsSpec extends Spec with ShouldMatchers with BeforeAndA
       
       val redCarsPriceView = new View(mapForRedCars, reduceToMaxPrice)
 
-      val cv = DesignDocument("max_car_views", null, Map[String, View](), null)
-      cv.language = "scala"
+      val cv = DesignDocument("max_car_views", null, Map[String, View](), null, "scala")
 
-      val rcv = DesignDocument(cv._id, null, Map("red_cars_max_price" -> redCarsPriceView), null)
-      rcv.language = "scala"
+      val rcv = DesignDocument(cv._id, null, Map("red_cars_max_price" -> redCarsPriceView), null, "scala")
       http(Doc(carDb, rcv._id) add rcv)
 
       val ls1 = http(carDb view(

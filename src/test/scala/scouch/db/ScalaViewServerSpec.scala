@@ -40,8 +40,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfterA
   }
   
   describe("Create a design document, for scala view") {
-    val d = DesignDocument("power", null, Map[String, View](), null)
-    d.language = "scala"
+    val d = DesignDocument("power", null, Map[String, View](), null, "scala")
     val mapfn1 = """(doc: dispatch.json.JsValue) => {
           val it = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.TestBeans.Item_1])); 
           for (st <- it.prices)
@@ -81,8 +80,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfterA
       revision = sh._2
     }
     it("update the document with 2 views") {
-      val doc = DesignDocument(d._id, revision, Map("power_lunch" -> vi_1, "mega_lunch" -> vi_2), null)
-      doc.language = "scala"
+      val doc = DesignDocument(d._id, revision, Map("power_lunch" -> vi_1, "mega_lunch" -> vi_2), null, "scala")
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
       nir._1 should equal(d._id)
@@ -103,8 +101,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfterA
   }
   
   describe("Create a design document, for scala view with map and reduce") {
-    val d = DesignDocument("big", null, Map[String, View](), null)
-    d.language = "scala"
+    val d = DesignDocument("big", null, Map[String, View](), null, "scala")
     val mapfn1 = """(doc: dispatch.json.JsValue) => {
           val it = sjson.json.JsBean.fromJSON(doc, Some(classOf[scouch.db.TestBeans.Item_1])); 
           for (st <- it.prices)
@@ -138,8 +135,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfterA
       revision = sh._2
     }
     it("update the document with the view") {
-      val doc = DesignDocument(d._id, revision, Map("big_lunch" -> vi_1), null)
-      doc.language = "scala"
+      val doc = DesignDocument(d._id, revision, Map("big_lunch" -> vi_1), null, "scala")
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
       nir._1 should equal(d._id)

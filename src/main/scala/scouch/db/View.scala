@@ -18,3 +18,9 @@ case class View(
   override def toString = 
     "map: " + map + " reduce: " + reduce
 }
+
+object ViewFormats {
+  import sjson.json.DefaultProtocol._
+  implicit val ViewFormat: Format[View] =
+    asProduct2("map", "reduce")(View)(View.unapply(_).get)
+}

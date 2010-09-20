@@ -35,6 +35,8 @@ object Couch {
   def apply(hostname: String, user: String, pass: String): Couch = Couch(hostname, 5984, Some((user, pass)))
 }
 
+import sjson.json._
+
 /** Requests on a particular database and CouchDB host. */
 case class Db(couch: Couch, name: String) extends Request(couch / name) with Js {
   val all_docs =  this / "_all_docs" ># ('rows ! list andThen { _ map 'id ! str })
@@ -48,6 +50,11 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
     this <:< Map("Content-Type" -> "application/json") << JsBean.toJSON(obj) >#  %('id ! str, 'rev ! str)
   }
   
+  /** create a doc from an object with auto id generation */
+  def doc_tc[T](obj: T)(implicit tjs: Writes[T]) = {
+    this <:< Map("Content-Type" -> "application/json") << JsonSerialization.tojson(obj)(tjs) >#  %('id ! str, 'rev ! str)
+  }
+
   /** create a doc from an object with auto id generation */
   def doc(obj: JsValue) = {
     this <:< Map("Content-Type" -> "application/json") << obj >#  %('id ! str, 'rev ! str)
@@ -139,6 +146,15 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
         case (_, _, x) => (null, null, x.asInstanceOf[T])
       }
     }
+
+  /** get an entity of type <tt>T</tt> based on its id. Returns a 
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> */
+  def get_tc[T](id: String)(implicit fjs: Reads[T]) = 
+    this / encode(id, Request.factoryCharset) ># {
+      case s@_ => 
+        val (id, ref) = getIdAndRef(s)
+        (id, ref, JsonSerialization.fromjson[T](s)(fjs))
+    }
   
   /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> 
@@ -164,6 +180,15 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
         case (_, _, x) => (null, null, x.asInstanceOf[T])
       } 
     }
+
+  /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> */
+  def get_tc[T](id: String, rev: String)(implicit fjs: Reads[T]) = 
+    this / encode(id, Request.factoryCharset) <<? Map("rev" -> rev) ># {
+      case s@_ => 
+        val (id, ref) = getIdAndRef(s)
+        (id, ref, JsonSerialization.fromjson(s)(fjs))
+    }
   
   /** conditional get with ETag support on revision of CouchDB. Returns a
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> if doing an actual fetch. Otherwise
@@ -178,6 +203,16 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
         }
       }
   }
+
+  /** conditional get with ETag support on revision of CouchDB. Returns a
+      <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> if doing an actual fetch. Otherwise
+      throws a <tt>dispatch.StatusCode(304, _)</tt> */
+  def conditionalGet_tc[T](id: String, rev: String)(implicit fjs: Reads[T]) =
+    this / encode(id, Request.factoryCharset) <:< Map("If-None-Match" -> ("\"" + rev + "\"")) ># {
+      case s@_ => 
+        val (id, ref) = getIdAndRef(s)
+        (id, ref, JsonSerialization.fromjson(s)(fjs))
+      }
 
   /** fetch the view for the query. The query can be built using the dsl as 
       specified in <tt>ViewQuery</tt> */
@@ -262,6 +297,11 @@ case class Doc(val db: Db, val id: String) extends Request(db / encode(id, Reque
   def add[T <: AnyRef](obj: T) = {
     this <<< JsBean.toJSON(obj) >|
   }
+
+  /** add an object (bean) to the document */
+  def add_tc[T](obj: T)(implicit tjs: Writes[T]) = {
+    this <<< JsValue.toJson(JsonSerialization.tojson(obj)(tjs)) >|
+  }
   
   /** add attachment to a document. None as the <tt>rev</tt> will create a new document
       as well */
@@ -286,6 +326,14 @@ case class Doc(val db: Db, val id: String) extends Request(db / encode(id, Reque
   /** update the document of specified revision, with the specified object */
   def update[T <: AnyRef](obj: T, r: String) = {
     val js = (Id._rev << r)(Js(JsBean.toJSON(obj)))
+    this <<< JsValue.toJson(js) ># {
+      case Updated.rev(rev) => (Id._rev << rev)(js)
+    }
+  }
+
+  /** update the document of specified revision, with the specified object */
+  def update_tc[T](obj: T, r: String)(implicit tjs: Writes[T]) = {
+    val js = (Id._rev << r)(JsonSerialization.tojson(obj)(tjs))
     this <<< JsValue.toJson(js) ># {
       case Updated.rev(rev) => (Id._rev << rev)(js)
     }
