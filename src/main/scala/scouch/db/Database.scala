@@ -22,11 +22,11 @@ trait Id extends Js {
 object Id extends Id
 
 /** Requests for a particular CouchDB host. */
-case class Couch(hostname: String, port: Int, auth: Option[(String, String)]) 
+case class Couch(hostname: String, port: Int, auth: Option[(String, String)])
   extends Request(auth match {
     case None => :/(hostname, port)
-    case Some(x) => :/(hostname, port).as (x._1, x._2). <:< (Map("Authorization" -> (x._1 + ":" + x._2)))
-  }) 
+    case Some(x) => :/(hostname, port).as_!(x._1, x._2)
+  })
 
 /** Factory for a CouchDB Request host with common parameters */
 object Couch {
