@@ -32,7 +32,7 @@ class ViewServer(val ps: PrintWriter) {
   
   /** The passed in <tt>PrintWriter</tt> is also used to log any message
       that the Scala interpreter spits out */
-  val interpreter = new scala.tools.nsc.Interpreter(s, ps)
+  val interpreter = new scala.tools.nsc.interpreter.IMain(s, ps)
   
   /** Evaluates the code snippet passed in. The snippet has to return a value */
   private def eval(code : String) : Any = {
@@ -43,7 +43,7 @@ class ViewServer(val ps: PrintWriter) {
     // Execute the code and catch the result
     val ir = interpreter.interpret("$res__.value = " + code);
     
-    import scala.tools.nsc.InterpreterResults._
+    import scala.tools.nsc.interpreter.Results._
 
     // Return value or throw an exception based on result
     ir match {

@@ -6,7 +6,7 @@ import dispatch._
 import dispatch.json._
 import dispatch.json.Js._
 import JsHttp._
-import RichRequest._
+// import RichRequest._
 import DbUtils._
 import sjson.json._
 
@@ -50,11 +50,11 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   
   /** create a doc from an object with auto id generation */
   def doc(obj: JsValue) = {
-    this <:< Map("Content-Type" -> "application/json") << obj >#  %('id ! str, 'rev ! str)
+    this <:< Map("Content-Type" -> "application/json") << JsValue.toJson(obj) >#  %('id ! str, 'rev ! str)
   }
 
   val create = this <<< Nil.mkString >|
-  val delete = DELETE >|
+  val delete = this.DELETE >|
     
   
   /** create multiple docs with auto-generated ids through a single POST. For
@@ -103,7 +103,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   
   /** fetch by id, returns a tuple (id, rev) 
       @deprecated use <tt>getRef</tt> instead */
-      @deprecated("use getRef instead") def ref_by_id(id: String) = 
+      @deprecated("use getRef instead", "0.6") def ref_by_id(id: String) = 
     this / encode(id, Request.factoryCharset) ># %(Symbol("_id") ? str, Symbol("_rev") ? str)
   
   /** fetch by id, returns a tuple (id, rev) */
@@ -118,7 +118,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   /** get an entity of type <tt>T</tt> based on its id. Returns a 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt>
       @deprecated use <tt>get(id)</tt> instead */
-  @deprecated("use get(id) instead") def by_id[T](id: String)(implicit m: Manifest[T]) = 
+  @deprecated("use get(id) instead", "0.6") def by_id[T](id: String)(implicit m: Manifest[T]) = 
     this / encode(id, Request.factoryCharset) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
@@ -143,7 +143,7 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
   /** get an entity of type <tt>T</tt> based on its id and rev. Returns a 
       <tt>Tuple3</tt> of <tt>(id, ref, T)</tt> 
       @deprecated use <tt>get(id, rev)</tt> instead */
-  @deprecated("use get(id, rev) instead") def by_id[T](id: String, rev: String)(implicit m: Manifest[T]) = 
+  @deprecated("use get(id, rev) instead", "0.6") def by_id[T](id: String, rev: String)(implicit m: Manifest[T]) = 
     this / encode(id, Request.factoryCharset) <<? Map("rev" -> rev) ># {
       case s@_ => 
         val (id, ref) = getIdAndRef(s)
@@ -265,11 +265,12 @@ case class Doc(val db: Db, val id: String) extends Request(db / encode(id, Reque
   
   /** add attachment to a document. None as the <tt>rev</tt> will create a new document
       as well */
+  import org.apache.http.entity.ByteArrayEntity
   def attach(attachmentId: String, contentType: String, data: Array[Byte], rev: Option[String]) = rev match {
     case Some(r) =>
-      this / (encode(attachmentId, Request.factoryCharset) + Http.?(Map("rev" -> r))) put (data, contentType) >|
+      this / encode(attachmentId, Request.factoryCharset) <<? Map("rev" -> r) copy(method = "PUT", body = Some(new ByteArrayEntity(data))) >|
     case None =>
-      this / encode(attachmentId, Request.factoryCharset) put (data, contentType) >|
+      this / encode(attachmentId, Request.factoryCharset) copy(method = "PUT", body = Some(new ByteArrayEntity(data))) >|
   }
   
   /** fetch the attachment having id as <tt>attachmentId</tt> */
@@ -280,7 +281,7 @@ case class Doc(val db: Db, val id: String) extends Request(db / encode(id, Reque
   /** delete the attachment specified by the id <tt>attachmentId</tt> for the revision
       <tt>rev</tt> of the current document */
   def deleteAttachment(attachmentId: String, rev: String) = {
-    (this / encode(attachmentId, Request.factoryCharset) DELETE) <<? Map("rev" -> rev)  >|
+    (this / encode(attachmentId, Request.factoryCharset)) <<? Map("rev" -> rev) copy(method = "DELETE")  >|
   }
   
   /** update the document of specified revision, with the specified object */
@@ -295,6 +296,6 @@ case class Doc(val db: Db, val id: String) extends Request(db / encode(id, Reque
     case Updated.rev(rev) => (Id._rev << rev)(js)
   }
   private object Updated { val rev = 'rev ? str }
-  def delete(rev: String) = DELETE <<? Map("rev" -> rev) >|
+  def delete(rev: String) = this.DELETE <<? Map("rev" -> rev) >|
 }
 
