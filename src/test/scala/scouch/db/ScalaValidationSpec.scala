@@ -17,7 +17,7 @@ import scouch.db.TestBeans._
 @RunWith(classOf[JUnitRunner])
 class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEach {
   
-  val http = new Http
+  val http = new Http with thread.Safety
   val test = Db(Couch(), "test")
   
 //  val test = Db(Couch("localhost", "jchris", "secretpass"), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984

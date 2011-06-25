@@ -191,10 +191,10 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
           this / (v.getViewURIFromName + Options.?(o))
         
         case (None, Some(k)) =>
-          this / (v.getViewURIFromName) << JsValue.toJson(JsValue(Map("keys" -> k)))
+          this / (v.getViewURIFromName) << (JsValue.toJson(JsValue(Map("keys" -> k))), "application/json")
         
         case (Some(o), Some(k)) =>
-          this / (v.getViewURIFromName + Options.?(o)) << JsValue.toJson(JsValue(Map("keys" -> k)))
+          this / (v.getViewURIFromName + Options.?(o)) << (JsValue.toJson(JsValue(Map("keys" -> k))), "application/json")
       } 
     r ># ('rows ! (list ! obj))
   }
@@ -212,10 +212,10 @@ case class Db(couch: Couch, name: String) extends Request(couch / name) with Js 
         this / (v.getViewURIFromName + Options.?(o))
         
       case (None, Some(k)) =>
-        this / (v.getViewURIFromName) << JsValue.toJson(JsValue(Map("keys" -> k)))
+        this / (v.getViewURIFromName) << (JsValue.toJson(JsValue(Map("keys" -> k))), "application/json")
         
       case (Some(o), Some(k)) =>
-        this / (v.getViewURIFromName + Options.?(o)) << JsValue.toJson(JsValue(Map("keys" -> k)))
+        this / (v.getViewURIFromName + Options.?(o)) << (JsValue.toJson(JsValue(Map("keys" -> k))), "application/json")
     } 
     r ># {
       case s => ('rows ! (list ! obj))(s).map {o =>

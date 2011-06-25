@@ -19,7 +19,7 @@ case class DesignDocument(var _id: String,
                           @(JSONProperty @getter)(ignoreIfNull = true, ignore = false)
                           _rev: String, 
                           
-                          @(OptionTypeHint @field)(value = classOf[Map[_,_]])
+                          @(OptionTypeHint @field)(value = classOf[collection.immutable.Map[_,_]])
                           @(JSONTypeHint @field)(value = classOf[View])
                           views: Map[String, View],
                           

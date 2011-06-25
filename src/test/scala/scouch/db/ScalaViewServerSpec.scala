@@ -15,7 +15,7 @@ import Options._
 @RunWith(classOf[JUnitRunner])
 class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfterAll {
   
-  val http = new Http
+  val http = new Http with thread.Safety
 //  val test = Db(Couch("localhost", "jchris", "secretpass"), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984
   val test = Db(Couch(), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984
 
@@ -82,6 +82,7 @@ class ScalaViewServerSpec  extends Spec with ShouldMatchers with BeforeAndAfterA
     }
     it("update the document with 2 views") {
       val doc = DesignDocument(d._id, revision, Map("power_lunch" -> vi_1, "mega_lunch" -> vi_2), null)
+      // val doc = DesignDocument(d._id, revision, Map("power_lunch" -> vi_1), null)
       doc.language = "scala"
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))

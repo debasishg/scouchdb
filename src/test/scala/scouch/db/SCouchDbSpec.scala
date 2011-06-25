@@ -17,7 +17,7 @@ import BulkDocument._
 class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
   
 
-  val http = new Http
+  val http = new Http with thread.Safety
   val test = Db(Couch(), "test") // these tests expect CouchDB to be running at 127.0.0.1 on port 5984
 
   override def beforeAll {

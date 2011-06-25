@@ -22,6 +22,8 @@ class ViewServer(val ps: PrintWriter) {
   
   val s = new Settings
   s.classpath.value_=(System.getProperty("CDB_VIEW_CLASSPATH"))
+  s.bootclasspath.value_=(System.getProperty("CDB_VIEW_CLASSPATH"))
+  s.usejavacp.value = true
 
   // val origBootclasspath = s.bootclasspath.value
   // val compilerPath = jarPathOfClass("scala.tools.nsc.Interpreter")
@@ -32,22 +34,26 @@ class ViewServer(val ps: PrintWriter) {
   
   /** The passed in <tt>PrintWriter</tt> is also used to log any message
       that the Scala interpreter spits out */
-  val interpreter = new scala.tools.nsc.interpreter.IMain(s, ps)
+  val interpreter = new scala.tools.nsc.interpreter.IMain(s, ps) {
+    override protected def parentClassLoader = this.getClass.getClassLoader 
+  } 
   
   /** Evaluates the code snippet passed in. The snippet has to return a value */
   private def eval(code : String) : Any = {
 
-    val holder = new ResHolder(null)
-    interpreter.bind("$res__", holder.getClass.getName, holder)
+    val holder = Array[Any](0)
+    val r = interpreter.bind("$res__", "Array[Any]", holder)
+    val res = interpreter.addImports("dispatch.json._", "dispatch.json.Js._")
 
     // Execute the code and catch the result
-    val ir = interpreter.interpret("$res__.value = " + code);
+    // val ir = interpreter.interpret("$res__.value = " + code);
+    val ir = interpreter.interpret("$res__(0) = " + code);
     
     import scala.tools.nsc.interpreter.Results._
 
     // Return value or throw an exception based on result
     ir match {
-      case Success => holder.value
+      case Success => holder(0)
       case Error => throw new ScriptException("error in: '" + code)
       case Incomplete => throw new ScriptException("incomplete in :'" + code)
     }
@@ -88,20 +94,20 @@ class ViewServer(val ps: PrintWriter) {
       fns += eval(fnStr).asInstanceOf[Function1[JsValue, Iterable[List[Any]]]]
       Left(true)
     } catch {
-      case se: ScriptException =>
+      case se: ScriptException => {
+        se.printStackTrace(ps)
         Right(JsValue(Map("error" -> "map_compilation_error", "reason" -> se.getMessage)))
+      }
     }
   }
-  
+
   /** callback for <tt>map_doc</tt> */
   def map_doc(docJs: JsValue) = {
     ps.println("in map_doc:" + docJs)
     ps.flush
     val res = 
       try {
-        fns.foldLeft(List[Iterable[List[Any]]]())((s, f) =>
-          f(docJs) :: s
-        )
+        fns.foldLeft(List[Iterable[List[Any]]]())((s, f) => f(docJs) :: s)
       } catch {
         case e: Exception =>
           e.printStackTrace(ps)
@@ -109,7 +115,9 @@ class ViewServer(val ps: PrintWriter) {
       }
     try {
       import sjson.json.Implicits._
-      JsBean.toJSON(res.reverse)
+      val l = JsBean.toJSON(res.reverse)
+      ps.println("l = " + l)
+      l
     } catch {
       case e: Exception =>
         e.printStackTrace(ps)
@@ -180,6 +188,10 @@ object VS {
     val p = new PrintWriter(System.out)
     
     var s = isr.readLine
+    v.ps.println("**")
+    v.ps.println(s)
+    v.ps.println("**")
+    v.ps.flush
     while (s != null) {
       Js(s) match {
 
@@ -275,7 +287,7 @@ object VS {
          *  $COUCH_SOURCE/share/server/util.js
          *  $COUCH_HOME/test/query_server_spec.rb
          */
-        case JsArray(List(JsString("validate"), JsString(fns), ndoc, odoc, req)) => {
+        case JsArray(List(JsString("validate_doc_update"), JsString(fns), ndoc, odoc, req)) => {
           p.write("in validate")
           p.write("fns = " + fns)
           p.write("odoc = " + odoc)
@@ -305,6 +317,10 @@ object VS {
           v.ps.close
       }
       s = isr.readLine
+      v.ps.println("**")
+      v.ps.println(s)
+      v.ps.println("**")
+      v.ps.flush
     }
   }
 }
