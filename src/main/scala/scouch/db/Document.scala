@@ -4,6 +4,13 @@ import sjson.json._
 import scala.reflect._
 import scala.annotation.target._
 
+sealed abstract class IdempotentFns(name: String)
+case object Lists extends IdempotentFns("lists")
+case object Shows extends IdempotentFns("shows")
+case object Filters extends IdempotentFns("filters")
+case object Updates extends IdempotentFns("updates")
+case object Validates extends IdempotentFns("validate_doc_update")
+
 object DesignDocument {
   val PREFIX = "_design/"
   
@@ -15,16 +22,10 @@ object DesignDocument {
 
 @BeanInfo
 case class DesignDocument(var _id: String, 
-                          
-                          @(JSONProperty @getter)(ignoreIfNull = true, ignore = false)
-                          _rev: String, 
-                          
-                          @(OptionTypeHint @field)(value = classOf[collection.immutable.Map[_,_]])
-                          @(JSONTypeHint @field)(value = classOf[View])
-                          views: Map[String, View],
-                          
-                          @(JSONProperty @getter)(ignoreIfNull = true, ignore = false)
-                          validate_doc_update: String) {
+  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) _rev: String, 
+  @(JSONTypeHint @field)(value = classOf[View]) views: Map[String, View],
+  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) validate_doc_update: String) {
+
   if (_id != null) 
     if (!_id.startsWith(DesignDocument.PREFIX))
       _id = DesignDocument.extendId(_id)

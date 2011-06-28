@@ -4,6 +4,7 @@ import javax.script.ScriptException;
 
 import scala.collection.mutable.ArrayBuffer
 import dispatch.json._
+import dispatch.json.Js._
 import sjson.json._
 
 import java.io._
@@ -17,21 +18,14 @@ class ViewServer(val ps: PrintWriter) {
   
   /** stores the collection of map/reduce functions */
   var fns = new ArrayBuffer[(JsValue)=> Iterable[List[Any]]]
+  var ddocs = new collection.mutable.HashMap[String, JsValue]
   
   import scala.tools.nsc._
   
   val s = new Settings
   s.classpath.value_=(System.getProperty("CDB_VIEW_CLASSPATH"))
-  s.bootclasspath.value_=(System.getProperty("CDB_VIEW_CLASSPATH"))
   s.usejavacp.value = true
 
-  // val origBootclasspath = s.bootclasspath.value
-  // val compilerPath = jarPathOfClass("scala.tools.nsc.Interpreter")
-  // val libPath = jarPathOfClass("scala.ScalaObject")
-  // val pathList = List(jarPathOfClass(compilerPath), jarPathOfClass(libPath))
-  // ps.println("pathList = " + pathList)
-  // settings.bootclasspath.value = (origBootclasspath :: pathList).mkString(java.io.File.separator)
-  
   /** The passed in <tt>PrintWriter</tt> is also used to log any message
       that the Scala interpreter spits out */
   val interpreter = new scala.tools.nsc.interpreter.IMain(s, ps) {
@@ -43,11 +37,13 @@ class ViewServer(val ps: PrintWriter) {
 
     val holder = Array[Any](0)
     val r = interpreter.bind("$res__", "Array[Any]", holder)
+    ps.println("bind res = " + r)
     val res = interpreter.addImports("dispatch.json._", "dispatch.json.Js._")
+    ps.println("import res = " + res)
 
     // Execute the code and catch the result
-    // val ir = interpreter.interpret("$res__.value = " + code);
     val ir = interpreter.interpret("$res__(0) = " + code);
+    ps.println("interpret res = " + ir)
     
     import scala.tools.nsc.interpreter.Results._
 
@@ -59,14 +55,6 @@ class ViewServer(val ps: PrintWriter) {
     }
   }
 
-  def jarPathOfClass(className: String) = {
-    val resource = className.split('.').mkString("/", "/", ".class")
-    val path = getClass.getResource(resource).getPath
-    val indexOfFile = path.indexOf("file:")
-    val indexOfSeparator = path.lastIndexOf('!')
-    path.substring(indexOfFile, indexOfSeparator)
-  }
-  
   /** callback for handling reset */
   def reset = {
     ps.println("in reset")
@@ -115,9 +103,7 @@ class ViewServer(val ps: PrintWriter) {
       }
     try {
       import sjson.json.Implicits._
-      val l = JsBean.toJSON(res.reverse)
-      ps.println("l = " + l)
-      l
+      JsBean.toJSON(res.reverse)
     } catch {
       case e: Exception =>
         e.printStackTrace(ps)
@@ -144,25 +130,30 @@ class ViewServer(val ps: PrintWriter) {
     JsValue.toJson(JsValue(List(true, rets)))
   }
 
+  def add_ddocs(ddocId: String, ddoc: JsValue) = ddocs += ((ddocId, ddoc))
+
   import ViewServerUtils._
-  def validate(funStr: String, newDoc: JsValue, 
-    oldDoc: JsValue, req: Any): Either[String, JsValue] = {
-    ps.println("in validate:" + funStr)
-    ps.println("newdoc = " + newDoc)
-    ps.println("olddoc = " + oldDoc)
-    ps.println("req = " + req)
-    ps.flush
+  def validate(ddocname: String, funPath: String, doc: JsValue, args: JsValue): Either[String, JsValue] = {
 
     try {
-      val fn = eval(funStr).asInstanceOf[Function3[JsValue, JsValue, Any, Any]]
-      fn(newDoc, oldDoc, req)
+      val ddoc = ddocs.get(ddocname).getOrElse(sys.error("query protocol error: uncached design doc: " + ddocname))
+      val valid = 'validate_doc_update ? str
+      val valid(valid_) = ddoc
+      val fn = eval(valid_).asInstanceOf[Function3[JsValue, JsValue, Any, Any]]
+      val f = fn(doc, doc, args)
       Left(JsValue.toJson(JsNumber(1)))
     } catch {
       case se: ScriptException =>
+        se.printStackTrace(ps)
+        ps.flush
         Right(JsValue(Map("error" -> "validation_compilation_error", "reason" -> se.getMessage)))
       case vx: ValidationException =>
+        vx.printStackTrace(ps)
+        ps.flush
         Right(JsValue(Map("forbidden" -> vx.getMessage)))
       case ux: AuthorizationException =>
+        ux.printStackTrace(ps)
+        ps.flush
         Right(JsValue(Map("unauthorized" -> ux.getMessage)))
       case x: Exception =>
         x.printStackTrace(ps)
@@ -287,15 +278,15 @@ object VS {
          *  $COUCH_SOURCE/share/server/util.js
          *  $COUCH_HOME/test/query_server_spec.rb
          */
-        case JsArray(List(JsString("validate_doc_update"), JsString(fns), ndoc, odoc, req)) => {
-          p.write("in validate")
-          p.write("fns = " + fns)
-          p.write("odoc = " + odoc)
-          p.write("ndoc = " + ndoc)
-          p.write("req = " + req)
+        case JsArray(List(JsString("ddoc"), JsString("new"), JsString(ddocname), doc)) => {
+          v.add_ddocs(ddocname, doc)
+          p.write(JsValue.toJson(JsValue(true)))
+          p.write('\n')
           p.flush
+        }
 
-          v.validate(fns, ndoc, odoc, req) match {
+        case JsArray(List(JsString("ddoc"), JsString(ddocname), JsArray(JsString(fun) :: _), JsArray(doc :: _ :: args :: _))) => {
+          v.validate(ddocname, fun, doc, args) match {
             case Left(s) => {
               p.write(s)
               p.write('\n')
@@ -317,10 +308,6 @@ object VS {
           v.ps.close
       }
       s = isr.readLine
-      v.ps.println("**")
-      v.ps.println(s)
-      v.ps.println("**")
-      v.ps.flush
     }
   }
 }

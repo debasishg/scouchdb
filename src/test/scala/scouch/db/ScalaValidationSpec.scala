@@ -59,7 +59,6 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
     }
   }
 
-  /**
   describe("Add a validation function and check specific validation of documents") {
 
     it("should allow creation of televisions but not air-conditioners") {
@@ -288,5 +287,4 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
       }
     }
   }
-**/
 }
