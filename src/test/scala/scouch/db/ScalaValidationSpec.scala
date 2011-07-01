@@ -1,7 +1,7 @@
 package scouch.db
 
 import org.scalatest.Spec
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, BeforeAndAfterAll}
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -15,7 +15,7 @@ import Options._
 import scouch.db.TestBeans._
 
 @RunWith(classOf[JUnitRunner])
-class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEach {
+class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEach with BeforeAndAfterAll {
   
   val http = new Http with thread.Safety
   val test = Db(Couch(), "test")
@@ -33,6 +33,10 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
     (http x test) { (status, _, _) => status } should equal (404)
     println("** destroyed database")
   }
+
+  override def afterAll {
+    Http.shutdown
+  }
   
   private def deleteAllDocs {
     http(test all_docs)
@@ -46,7 +50,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
       val vfn = """(ndoc: dispatch.json.JsValue,
         odoc: dispatch.json.JsValue, req: Any) => {}"""
 
-      val d = DesignDocument("foo_1", null, Map[String, View](), vfn)
+      val d = DesignDocument("foo_1", null, Map[String, View](), Some(vfn))
       d.language = "scala"
 
       val de = Doc(test, d._id)
@@ -70,7 +74,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
         if (s.asInstanceOf[Shop].item == "air-conditioner") throw new ValidationException("Cannot allow")
       }"""
       
-      val d = DesignDocument("foo_2", null, Map[String, View](), vfn)
+      val d = DesignDocument("foo_2", null, Map[String, View](), Some(vfn))
       d.language = "scala"
       val de = Doc(test, d._id)
       d._id should equal("_design/foo_2")
@@ -97,7 +101,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
   describe("Update an existing document after adding an all-fail validation function to design document") {
 
     it("updation of an existing document should fail after adding an all-fail validation function to design document") {
-      val d = DesignDocument("foo_3", null, Map[String, View](), null)
+      val d = DesignDocument("foo_3", null, Map[String, View]())
       d.language = "scala"
       val de = Doc(test, d._id)
       d._id should equal("_design/foo_3")
@@ -125,7 +129,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
           throw new ValidationException("Cannot update")
         }"""
 
-      val ddoc = DesignDocument("foo_3", ir._2, Map[String, View](), vfn)
+      val ddoc = DesignDocument("foo_3", ir._2, Map[String, View](), Some(vfn))
       ddoc.language = "scala"
       http(de update(ddoc, ir._2))
       val ndir = http(de ># %(Id._id, Id._rev))
@@ -161,7 +165,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
       val vfn = """(ndoc: dispatch.json.JsValue,
         odoc: dispatch.json.JsValue, req: Any) => { throw new scouch.db.ViewServerUtils.ValidationException("Cannot update"); }"""
 
-      val d = DesignDocument("foo_invalid", null, Map[String, View](), vfn)
+      val d = DesignDocument("foo_invalid", null, Map[String, View](), Some(vfn))
       d.language = "scala"
 
       val de = Doc(test, d._id)
@@ -202,7 +206,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
         require(List(s.store, s.item))
       }"""
 
-      val d = DesignDocument("foo_2", null, Map[String, View](), vfn)
+      val d = DesignDocument("foo_2", null, Map[String, View](), Some(vfn))
       d.language = "scala"
       val de = Doc(test, d._id)
       d._id should equal("_design/foo_2")
@@ -230,7 +234,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
   describe("Update an existing document by trying to change a logically immutable field (e.g. creation date)") {
 
     it("updation of shop should fail on change of store name") {
-      val d = DesignDocument("foo_3", null, Map[String, View](), null)
+      val d = DesignDocument("foo_3", null, Map[String, View]())
       d.language = "scala"
       val de = Doc(test, d._id)
       d._id should equal("_design/foo_3")
@@ -266,7 +270,7 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
         unchanged("store")
       }"""
 
-      val ddoc = DesignDocument("foo_3", ir._2, Map[String, View](), vfn)
+      val ddoc = DesignDocument("foo_3", ir._2, Map[String, View](), Some(vfn))
       ddoc.language = "scala"
       http(de update(ddoc, ir._2))
       val ndir = http(de ># %(Id._id, Id._rev))
@@ -287,4 +291,29 @@ class ScalaValidationSpec extends Spec with ShouldMatchers with BeforeAndAfterEa
       }
     }
   }
+
+  /**
+  describe("Create a document with shows function in design document") {
+    
+    it("creation should be successful") {
+      val sfn = """(ndoc: dispatch.json.JsValue, req: Any) => {
+        val i = 'item ? str
+        val i(i_) = ndoc
+        i_
+      }"""
+
+      val d = DesignDocument("item_1", null, Map[String, View](), shows = Some(Map("simple" -> sfn)))
+      d.language = "scala"
+
+      val de = Doc(test, d._id)
+
+      d._id should equal("_design/item_1")
+      http(de add d)
+      val ir = http(de ># %(Id._id, Id._rev))
+      ir._1 should equal(d._id)
+      val res = http(test doc Js("""{"item":"oranges","prices":{"Fresh Mart":1.99,"Price Max":3.19,"Citrus Circus":1.09}}"""))
+      println(res)
+    }
+  }
+  **/
 }

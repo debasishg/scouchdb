@@ -102,7 +102,6 @@ class ViewServer(val ps: PrintWriter) {
           Nil
       }
     try {
-      import sjson.json.Implicits._
       JsBean.toJSON(res.reverse)
     } catch {
       case e: Exception =>
@@ -133,31 +132,34 @@ class ViewServer(val ps: PrintWriter) {
   def add_ddocs(ddocId: String, ddoc: JsValue) = ddocs += ((ddocId, ddoc))
 
   import ViewServerUtils._
-  def validate(ddocname: String, funPath: String, doc: JsValue, args: JsValue): Either[String, JsValue] = {
-
+  def process(ddocname: String, funPath: List[String], doc: JsValue, args: JsValue): Either[String, JsValue] = {
     try {
       val ddoc = ddocs.get(ddocname).getOrElse(sys.error("query protocol error: uncached design doc: " + ddocname))
-      val valid = 'validate_doc_update ? str
-      val valid(valid_) = ddoc
-      val fn = eval(valid_).asInstanceOf[Function3[JsValue, JsValue, Any, Any]]
-      val f = fn(doc, doc, args)
+      val fn =
+        funPath match {
+          case cmd :: Nil => // for validate_doc_update we have only a singleton list 
+            val c = Symbol(cmd) ? str
+            val c(c_) = ddoc
+            c_
+          case cmd :: f :: Nil => // 2 element list for functions like "shows", "lists" etc.
+            val c = Symbol(cmd) ? obj
+            val f1 = Symbol(f) ? str
+            val c(f1(f_)) = ddoc
+            f_
+          case _ => sys.error("Unhandled function path: [" + funPath + "]")
+        }
+
+      val function = eval(fn).asInstanceOf[Function3[JsValue, JsValue, Any, Any]]
+      val f = function(doc, doc, args)
       Left(JsValue.toJson(JsNumber(1)))
     } catch {
       case se: ScriptException =>
-        se.printStackTrace(ps)
-        ps.flush
         Right(JsValue(Map("error" -> "validation_compilation_error", "reason" -> se.getMessage)))
       case vx: ValidationException =>
-        vx.printStackTrace(ps)
-        ps.flush
         Right(JsValue(Map("forbidden" -> vx.getMessage)))
       case ux: AuthorizationException =>
-        ux.printStackTrace(ps)
-        ps.flush
         Right(JsValue(Map("unauthorized" -> ux.getMessage)))
       case x: Exception =>
-        x.printStackTrace(ps)
-        ps.flush
         Right(JsValue(Map("dummy" -> x.getMessage)))
     }
   }
@@ -262,21 +264,15 @@ object VS {
 
         /**
          * The protocol is 
+         *
+         * Step #1
+         * -------
          * CouchDB sends: 
          * 
-         * ["validate", function string, new document, old document, request]
+         * ["ddoc", "new", design doc name, design document]
          *
-         * View Server returns: 
+         * View Server stores the design doc in a hash hashed by the name and returns "true"
          *
-         * 1 if successful, otherwise exception having "error" -> "forbidden", "reason" -> anything
-         *
-         * The key "forbidden" is important - otherwise CouchDB will not send back 403.
-         *
-         * References:
-         *  $COUCH_SOURCE/share/server/validate.js
-         *  $COUCH_SOURCE/share/server/loop.js
-         *  $COUCH_SOURCE/share/server/util.js
-         *  $COUCH_HOME/test/query_server_spec.rb
          */
         case JsArray(List(JsString("ddoc"), JsString("new"), JsString(ddocname), doc)) => {
           v.add_ddocs(ddocname, doc)
@@ -285,19 +281,57 @@ object VS {
           p.flush
         }
 
-        case JsArray(List(JsString("ddoc"), JsString(ddocname), JsArray(JsString(fun) :: _), JsArray(doc :: _ :: args :: _))) => {
-          v.validate(ddocname, fun, doc, args) match {
-            case Left(s) => {
-              p.write(s)
-              p.write('\n')
-              p.flush
+        // handle validate
+        // this is the general protocol for handling functions like "shows", "lists" etc.
+        // but the handlers for each of them need to be written
+        // currently "process" only works for validate_doc_update
+
+        /**
+         * The protocol is 
+         *
+         * Step #2
+         * -------
+         * CouchDB sends: 
+         *
+         * ["ddoc", design doc name, [fun path] (e.g. validate_doc_update), [doc, _, args, _]]
+         *
+         * References:
+         *  $COUCH_SOURCE/share/server/validate.js
+         *  $COUCH_SOURCE/share/server/loop.js
+         *  $COUCH_SOURCE/share/server/util.js
+         *  $COUCH_HOME/test/query_server_spec.rb : run it using the trace flags to see the line protocol
+         */
+        case x@JsArray(List(JsString("ddoc"), JsString(ddocname), funpath, JsArray(doc :: _ :: args :: _))) => {
+          val fns: Either[List[String], JsValue] =
+            funpath match {
+              case JsArray(JsString(cmd) :: JsString(fn) :: Nil) => Left(List(cmd, fn))
+              case JsArray(JsString(cmd) :: Nil) => Left(List(cmd))
+              case _ => Right(JsString("Unhandled function list: " + funpath))
             }
-            case Right(x) => {
+
+          fns.fold(
+            (lst) => {
+              v.process(ddocname, lst, doc, args).fold(
+                (s) => {
+                  v.ps.println("from process: " + s)
+                  v.ps.flush
+                  p.write(s)
+                  p.write('\n')
+                  p.flush
+                },
+                (x) => {
+                  p.write(JsValue.toJson(x))
+                  p.write('\n')
+                  p.flush
+                }
+              )
+            },
+            (ex) => {
               p.write(JsValue.toJson(x))
               p.write('\n')
               p.flush
             }
-          }
+          )
         }
 
         case _ =>
@@ -308,6 +342,10 @@ object VS {
           v.ps.close
       }
       s = isr.readLine
+      v.ps.println("**")
+      v.ps.println(s)
+      v.ps.println("**")
+      v.ps.flush
     }
   }
 }

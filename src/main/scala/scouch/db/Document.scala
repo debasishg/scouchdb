@@ -24,7 +24,11 @@ object DesignDocument {
 case class DesignDocument(var _id: String, 
   @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) _rev: String, 
   @(JSONTypeHint @field)(value = classOf[View]) views: Map[String, View],
-  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) validate_doc_update: String) {
+  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) validate_doc_update: Option[String] = None,
+  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) shows: Option[Map[String, String]] = None,
+  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) filters: Option[Map[String, String]] = None,
+  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) updates: Option[Map[String, String]] = None,
+  @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) lists: Option[Map[String, String]] = None) {
 
   if (_id != null) 
     if (!_id.startsWith(DesignDocument.PREFIX))
@@ -32,13 +36,13 @@ case class DesignDocument(var _id: String,
   
   var language = "javascript"
   
-  private [db] def this() = this(null, null, Map[String, View](), null)
+  private [db] def this() = this(null, null, Map[String, View](), None)
   
   override def toString = {
     "_id = " + _id + " _rev = " + _rev + " language = " + language + " " + 
       (validate_doc_update match {
-        case null => ""
-        case x => " validate = " + x + " "
+        case Some(x) => " validate = " + x + " "
+        case _ => ""
       }) + 
       (views match {
         case null => ""

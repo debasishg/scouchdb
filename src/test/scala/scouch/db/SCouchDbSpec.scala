@@ -29,6 +29,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
   override def afterAll {
     http(test.delete)
     (http x test) { (status, _, _) => status } should equal (404)
+    Http.shutdown
     println("** destroyed database")
   }
   
@@ -46,7 +47,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
   }
   
   describe("Create a design document, query by id and update") {
-    val d = DesignDocument("foo", null, Map[String, View](), null)
+    val d = DesignDocument("foo", null, Map[String, View]())
     val mapfn = "function(doc) { emit(doc.value,doc); }"
     val vi = new View(mapfn, null)
     var revision: String = null
@@ -75,7 +76,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
       revision = sh._2
     }
     it("update the document with a view") {
-      val doc = DesignDocument(d._id, revision, Map("map" -> vi), null)
+      val doc = DesignDocument(d._id, revision, Map("map" -> vi))
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
       nir._1 should equal(d._id)
@@ -96,7 +97,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
       sh._3._rev should equal(sh._2)
     }
     it("update with incorrect revision should give 409 (conflict in update)") {
-      val doc = DesignDocument(d._id, revision, Map("map" -> vi), null) // using same revision as before
+      val doc = DesignDocument(d._id, revision, Map("map" -> vi)) // using same revision as before
       intercept[dispatch.StatusCode] {
         http(de update(doc, revision))
       }
@@ -109,7 +110,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
       }
     }
     it("update with null revision and same matching id should give 409 (conflict in update)") {
-      val doc = DesignDocument(d._id, null, Map("map" -> vi), null) // using null revision 
+      val doc = DesignDocument(d._id, null, Map("map" -> vi)) // using null revision 
       try {
         http(de update(doc, revision))
       }
@@ -287,7 +288,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
   }
   
   describe("Create another design document, query by id and update") {
-    val d = DesignDocument("lunch", null, Map[String, View](), null)
+    val d = DesignDocument("lunch", null, Map[String, View]())
     val mapfn = "function(doc) {\n    var store, price, key;\n    if (doc.item && doc.prices) {\n        for (store in doc.prices) {\n            price = doc.prices[store];\n            key = [doc.item, price];\n            emit(key, store);\n    }\n  }\n}\n"
     val vi = new View(mapfn, null)
     var revision: String = null
@@ -316,7 +317,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
       revision = sh._2
     }
     it("update the document with a view") {
-      val doc = DesignDocument(d._id, revision, Map("least_cost_lunch" -> vi), null)
+      val doc = DesignDocument(d._id, revision, Map("least_cost_lunch" -> vi))
       http(de update(doc, revision))
       nir = http(de ># %(Id._id, Id._rev))
       nir._1 should equal(d._id)
@@ -652,7 +653,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
 
   describe("Create a design document with pass thru validation function") {
     val all_pass = "function(newDoc, oldDoc, userCtx) {}"  // all valid
-    val d = DesignDocument("foo_valid", null, Map[String, View](), all_pass)
+    val d = DesignDocument("foo_valid", null, Map[String, View](), Some(all_pass))
     val de = Doc(test, d._id)
     
     it("creation should be successful") {
@@ -672,7 +673,7 @@ class SCouchDbSpec extends Spec with ShouldMatchers with BeforeAndAfterAll {
   
   describe("Create a design document with all-fail validation function") {
     val all_fail = "function(newDoc, oldDoc, userCtx) {throw({forbidden : 'no way'});}"
-    val d = DesignDocument("foo_invalid", null, Map[String, View](), all_fail)
+    val d = DesignDocument("foo_invalid", null, Map[String, View](), Some(all_fail))
     val de = Doc(test, d._id)
     
     it("creation should be successful") {

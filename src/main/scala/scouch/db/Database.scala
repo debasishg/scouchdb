@@ -1,12 +1,11 @@
 package scouch.db
 
 import java.net.URLEncoder.encode
-import sjson.json.Implicits._
+// import sjson.json.Implicits._
 import dispatch._
 import dispatch.json._
 import dispatch.json.Js._
 import JsHttp._
-// import RichRequest._
 import DbUtils._
 import sjson.json._
 
