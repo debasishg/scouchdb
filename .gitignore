@@ -30,3 +30,4 @@ semantic.cache
 .idea
 .scala_dependencies
 run
+.cache
